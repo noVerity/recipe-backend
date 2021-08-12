@@ -35,7 +35,7 @@ resource "heroku_app" "api" {
 
 resource "heroku_addon" "database" {
   app  = heroku_app.api.name
-  plan = "heroku-postgresql:hobby-basic"
+  plan = "heroku-postgresql:hobby-dev"
 }
 
 resource "heroku_build" "api" {
