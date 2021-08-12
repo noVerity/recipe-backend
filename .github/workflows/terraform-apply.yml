@@ -21,7 +21,7 @@ jobs:
         run: terraform init -backend-config="conn_str=${{ secrets.TF_BACKEND }}"
 
       - name: Apply Terraform
-        run: terraform apply
+        run: terraform apply -auto-approve
         env:
           TF_VAR_heroku_team: recipe
           TF_VAR_name: adtest
