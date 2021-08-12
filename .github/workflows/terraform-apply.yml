@@ -1,0 +1,27 @@
+name: Apply Terraform 
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'api/**'
+      - 'main.tf'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+
+      - name: Init Terraform
+        run: terraform init -backend-config="conn_str=${{ secrets.TF_BACKEND }}"
+
+      - name: Apply Terraform
+        run: terraform apply
+        env:
+          TF_VAR_heroku_team: recipe
+          TF_VAR_name: adtest
