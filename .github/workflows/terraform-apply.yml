@@ -23,7 +23,6 @@ jobs:
       - name: Apply Terraform
         run: terraform apply -auto-approve
         env:
-          TF_VAR_heroku_team: recipe
           TF_VAR_name: adtest
           HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}

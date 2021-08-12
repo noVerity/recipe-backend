@@ -2,10 +2,6 @@ variable "name" {
   type = string
 }
 
-variable "heroku_team" {
-  type = string
-}
-
 variable "heroku_region" {
   type    = string
   default = "eu"
@@ -34,10 +30,6 @@ resource "heroku_app" "api" {
 
   config_vars = {
     GIN_MODE = "release"
-  }
-
-  organization {
-    name = var.heroku_team
   }
 }
 

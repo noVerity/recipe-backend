@@ -32,7 +32,7 @@ func main() {
 	client := ent.NewClient(ent.Driver(drv))
 	defer client.Close()
 
-	// Run the auto migration tool
+	// Run auto migration tool
 	if err := client.Schema.Create(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed creating schema: %v\n", err)
 		os.Exit(1)
