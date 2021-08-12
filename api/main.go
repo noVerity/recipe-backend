@@ -19,12 +19,14 @@ const (
 )
 
 func main() {
+	// Open the database connection
 	db, err := sql.Open("pgx", getenv("DATABASE_URL", db_url))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
 
+	// Wrap the database connection in the ent driver and create the client
 	drv := entsql.OpenDB(dialect.Postgres, db)
 
 	client := ent.NewClient(ent.Driver(drv))
@@ -36,6 +38,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Set up the routes available in the API
 	r := SetupRouter(client)
 	r.Run()
 }
