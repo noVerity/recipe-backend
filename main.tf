@@ -12,14 +12,14 @@ variable "heroku_region" {
 }
 
 locals {
-  recipe_app_name  = "${var.name}-recipe-app"
+  recipe_app_name = "${var.name}-recipe-app"
 }
 
 terraform {
   backend "pg" {}
   required_providers {
     heroku = {
-      source = "heroku/heroku"
+      source  = "heroku/heroku"
       version = "4.6.0"
     }
   }
@@ -29,15 +29,15 @@ provider "heroku" {
 }
 
 resource "heroku_app" "api" {
-  name = "${local.recipe_app_name}-api"
-  region = "${var.heroku_region}"
+  name   = "${local.recipe_app_name}-api"
+  region = var.heroku_region
 
   config_vars = {
     GIN_MODE = "release"
   }
 
   organization {
-    name = "${var.heroku_team}"
+    name = var.heroku_team
   }
 }
 
@@ -51,7 +51,7 @@ resource "heroku_build" "api" {
   buildpacks = ["heroku/go"]
 
   source {
-    path    = "api"
+    path = "api"
   }
 }
 
