@@ -32,7 +32,7 @@ resource "heroku_app" "api" {
   name = "${local.recipe_app_name}-api"
   region = "${var.heroku_region}"
 
-  config_vars {
+  config_vars = {
     GIN_MODE = "release"
   }
 
