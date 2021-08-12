@@ -1,6 +1,7 @@
 module adomeit.xyz/recipe
 
 go 1.16
+// +heroku goVersion 1.16
 
 require (
 	entgo.io/ent v0.9.0
