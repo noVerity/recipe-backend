@@ -15,23 +15,11 @@ import (
 )
 
 const (
-	host     = "192.168.1.118"
-	port     = "5432"
-	dbuser   = "postgres"
-	password = "mysecretpassword"
-	dbname   = "recipe"
+	db_url = "postgres://postgres:mysecretpassword@192.168.1.118:5432/recipe?sslmode=disable"
 )
 
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		getenv("DATABASE_HOST", host),
-		getenv("DATABASE_PORT", port),
-		getenv("DATABASE_USER", dbuser),
-		getenv("DATABASE_PASSWORD", password),
-		getenv("DATABASE_NAME", dbname))
-
-	db, err := sql.Open("pgx", psqlInfo)
+	db, err := sql.Open("pgx", getenv("DATABASE_URL", db_url))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
