@@ -33,6 +33,9 @@ jobs:
         id: plan
         run: terraform plan -no-color
         continue-on-error: true
+        env:
+          TF_VAR_heroku_team: recipe
+          TF_VAR_name: adtest
 
       - uses: actions/github-script@0.9.0
         env:
