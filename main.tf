@@ -40,7 +40,7 @@ resource "heroku_addon" "database" {
 
 resource "heroku_build" "api" {
   app        = heroku_app.api.id
-  buildpacks = ["heroku/go"]
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-go.git"]
 
   source {
     path = "api"
