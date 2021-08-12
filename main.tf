@@ -51,6 +51,6 @@ resource "heroku_formation" "api" {
   app        = heroku_app.api.id
   type       = "web"
   quantity   = 1
-  size       = "Standard-1x"
+  size       = "free"
   depends_on = [heroku_build.api]
 }
