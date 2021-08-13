@@ -13,9 +13,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func SetupTestRouter(t *testing.T) *ent.Client {
+func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint string, payload string) *httptest.ResponseRecorder) {
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	return client
+
+	gin.SetMode(gin.ReleaseMode)
+	router := SetupRouter(client, gin.New())
+	requestTester := GetJSONRequestTester(router)
+
+	return client, requestTester
 }
 
 func GetJSONRequestTester(router *gin.Engine) func(method string, endpoint string, payload string) *httptest.ResponseRecorder {

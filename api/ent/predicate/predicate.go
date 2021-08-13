@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Ingredient is the predicate function for ingredient builders.
+type Ingredient func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

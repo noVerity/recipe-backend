@@ -9,18 +9,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type User struct {
-	Id       int    `json:"id,omitempty"`
+type UserRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
-	Password string `json:"password,omitempty"`
+	Password string `json:"password"`
+}
+
+type UserResponse struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+func UserModelToResponse(user *ent.User) UserResponse {
+	return UserResponse{
+		Username: user.Username,
+		Email:    user.Email,
+	}
 }
 
 // SetupUserRoutes takes the gin engine and creates routes for user sign up and login
 func SetupUserRoutes(r *gin.Engine, client *ent.Client) {
 	userRoute := r.Group("/user")
 	{
-		userRoute.POST("/", HandleCreateUser(client))
+		userRoute.POST("", HandleCreateUser(client))
 	}
 	r.POST("/login", HandleLogin(client))
 }
@@ -28,7 +39,7 @@ func SetupUserRoutes(r *gin.Engine, client *ent.Client) {
 // HandleCreateUser creates a route handler to allow registering of a user
 func HandleCreateUser(client *ent.Client) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		var user User
+		var user UserRequest
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -52,17 +63,14 @@ func HandleCreateUser(client *ent.Client) func(c *gin.Context) {
 			return
 		}
 
-		createdUser.ID = 0
-		createdUser.Password = ""
-
-		c.JSON(200, createdUser)
+		c.JSON(200, UserModelToResponse(createdUser))
 	}
 }
 
 // HandleLogin creates a route handler that checks if a user/password combination is valid
 func HandleLogin(client *ent.Client) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		var login User
+		var login UserRequest
 		if err := c.ShouldBindJSON(&login); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -80,9 +88,6 @@ func HandleLogin(client *ent.Client) func(c *gin.Context) {
 			return
 		}
 
-		foundUser.ID = 0
-		foundUser.Password = ""
-
-		c.JSON(200, foundUser)
+		c.JSON(200, UserModelToResponse(foundUser))
 	}
 }

@@ -8,6 +8,21 @@ import (
 )
 
 var (
+	// IngredientsColumns holds the columns for the "ingredients" table.
+	IngredientsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "calories", Type: field.TypeFloat32},
+		{Name: "fat", Type: field.TypeFloat32},
+		{Name: "carbohydrates", Type: field.TypeFloat32},
+		{Name: "protein", Type: field.TypeFloat32},
+	}
+	// IngredientsTable holds the schema information for the "ingredients" table.
+	IngredientsTable = &schema.Table{
+		Name:       "ingredients",
+		Columns:    IngredientsColumns,
+		PrimaryKey: []*schema.Column{IngredientsColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -23,6 +38,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		IngredientsTable,
 		UsersTable,
 	}
 )

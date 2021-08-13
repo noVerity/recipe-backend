@@ -9,6 +9,7 @@ import (
 
 	"adomeit.xyz/recipe/ent/migrate"
 
+	"adomeit.xyz/recipe/ent/ingredient"
 	"adomeit.xyz/recipe/ent/user"
 
 	"entgo.io/ent/dialect"
@@ -20,6 +21,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Ingredient is the client for interacting with the Ingredient builders.
+	Ingredient *IngredientClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -35,6 +38,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Ingredient = NewIngredientClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -67,9 +71,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Ingredient: NewIngredientClient(cfg),
+		User:       NewUserClient(cfg),
 	}, nil
 }
 
@@ -87,15 +92,16 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config: cfg,
-		User:   NewUserClient(cfg),
+		config:     cfg,
+		Ingredient: NewIngredientClient(cfg),
+		User:       NewUserClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		Ingredient.
 //		Query().
 //		Count(ctx)
 //
@@ -118,7 +124,98 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Ingredient.Use(hooks...)
 	c.User.Use(hooks...)
+}
+
+// IngredientClient is a client for the Ingredient schema.
+type IngredientClient struct {
+	config
+}
+
+// NewIngredientClient returns a client for the Ingredient from the given config.
+func NewIngredientClient(c config) *IngredientClient {
+	return &IngredientClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ingredient.Hooks(f(g(h())))`.
+func (c *IngredientClient) Use(hooks ...Hook) {
+	c.hooks.Ingredient = append(c.hooks.Ingredient, hooks...)
+}
+
+// Create returns a create builder for Ingredient.
+func (c *IngredientClient) Create() *IngredientCreate {
+	mutation := newIngredientMutation(c.config, OpCreate)
+	return &IngredientCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Ingredient entities.
+func (c *IngredientClient) CreateBulk(builders ...*IngredientCreate) *IngredientCreateBulk {
+	return &IngredientCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Ingredient.
+func (c *IngredientClient) Update() *IngredientUpdate {
+	mutation := newIngredientMutation(c.config, OpUpdate)
+	return &IngredientUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *IngredientClient) UpdateOne(i *Ingredient) *IngredientUpdateOne {
+	mutation := newIngredientMutation(c.config, OpUpdateOne, withIngredient(i))
+	return &IngredientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *IngredientClient) UpdateOneID(id int) *IngredientUpdateOne {
+	mutation := newIngredientMutation(c.config, OpUpdateOne, withIngredientID(id))
+	return &IngredientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Ingredient.
+func (c *IngredientClient) Delete() *IngredientDelete {
+	mutation := newIngredientMutation(c.config, OpDelete)
+	return &IngredientDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *IngredientClient) DeleteOne(i *Ingredient) *IngredientDeleteOne {
+	return c.DeleteOneID(i.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *IngredientClient) DeleteOneID(id int) *IngredientDeleteOne {
+	builder := c.Delete().Where(ingredient.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &IngredientDeleteOne{builder}
+}
+
+// Query returns a query builder for Ingredient.
+func (c *IngredientClient) Query() *IngredientQuery {
+	return &IngredientQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Ingredient entity by its id.
+func (c *IngredientClient) Get(ctx context.Context, id int) (*Ingredient, error) {
+	return c.Query().Where(ingredient.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *IngredientClient) GetX(ctx context.Context, id int) *Ingredient {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *IngredientClient) Hooks() []Hook {
+	return c.hooks.Ingredient
 }
 
 // UserClient is a client for the User schema.

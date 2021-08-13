@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"adomeit.xyz/recipe/ent/ingredient"
 	"adomeit.xyz/recipe/ent/predicate"
 	"adomeit.xyz/recipe/ent/user"
 
@@ -22,8 +23,658 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeUser = "User"
+	TypeIngredient = "Ingredient"
+	TypeUser       = "User"
 )
+
+// IngredientMutation represents an operation that mutates the Ingredient nodes in the graph.
+type IngredientMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	name             *string
+	calories         *float32
+	addcalories      *float32
+	fat              *float32
+	addfat           *float32
+	carbohydrates    *float32
+	addcarbohydrates *float32
+	protein          *float32
+	addprotein       *float32
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Ingredient, error)
+	predicates       []predicate.Ingredient
+}
+
+var _ ent.Mutation = (*IngredientMutation)(nil)
+
+// ingredientOption allows management of the mutation configuration using functional options.
+type ingredientOption func(*IngredientMutation)
+
+// newIngredientMutation creates new mutation for the Ingredient entity.
+func newIngredientMutation(c config, op Op, opts ...ingredientOption) *IngredientMutation {
+	m := &IngredientMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeIngredient,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withIngredientID sets the ID field of the mutation.
+func withIngredientID(id int) ingredientOption {
+	return func(m *IngredientMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Ingredient
+		)
+		m.oldValue = func(ctx context.Context) (*Ingredient, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Ingredient.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withIngredient sets the old Ingredient of the mutation.
+func withIngredient(node *Ingredient) ingredientOption {
+	return func(m *IngredientMutation) {
+		m.oldValue = func(context.Context) (*Ingredient, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m IngredientMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m IngredientMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Ingredient entities.
+func (m *IngredientMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *IngredientMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetName sets the "name" field.
+func (m *IngredientMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *IngredientMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Ingredient entity.
+// If the Ingredient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IngredientMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *IngredientMutation) ResetName() {
+	m.name = nil
+}
+
+// SetCalories sets the "calories" field.
+func (m *IngredientMutation) SetCalories(f float32) {
+	m.calories = &f
+	m.addcalories = nil
+}
+
+// Calories returns the value of the "calories" field in the mutation.
+func (m *IngredientMutation) Calories() (r float32, exists bool) {
+	v := m.calories
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCalories returns the old "calories" field's value of the Ingredient entity.
+// If the Ingredient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IngredientMutation) OldCalories(ctx context.Context) (v float32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldCalories is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldCalories requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCalories: %w", err)
+	}
+	return oldValue.Calories, nil
+}
+
+// AddCalories adds f to the "calories" field.
+func (m *IngredientMutation) AddCalories(f float32) {
+	if m.addcalories != nil {
+		*m.addcalories += f
+	} else {
+		m.addcalories = &f
+	}
+}
+
+// AddedCalories returns the value that was added to the "calories" field in this mutation.
+func (m *IngredientMutation) AddedCalories() (r float32, exists bool) {
+	v := m.addcalories
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCalories resets all changes to the "calories" field.
+func (m *IngredientMutation) ResetCalories() {
+	m.calories = nil
+	m.addcalories = nil
+}
+
+// SetFat sets the "fat" field.
+func (m *IngredientMutation) SetFat(f float32) {
+	m.fat = &f
+	m.addfat = nil
+}
+
+// Fat returns the value of the "fat" field in the mutation.
+func (m *IngredientMutation) Fat() (r float32, exists bool) {
+	v := m.fat
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFat returns the old "fat" field's value of the Ingredient entity.
+// If the Ingredient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IngredientMutation) OldFat(ctx context.Context) (v float32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldFat is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldFat requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFat: %w", err)
+	}
+	return oldValue.Fat, nil
+}
+
+// AddFat adds f to the "fat" field.
+func (m *IngredientMutation) AddFat(f float32) {
+	if m.addfat != nil {
+		*m.addfat += f
+	} else {
+		m.addfat = &f
+	}
+}
+
+// AddedFat returns the value that was added to the "fat" field in this mutation.
+func (m *IngredientMutation) AddedFat() (r float32, exists bool) {
+	v := m.addfat
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFat resets all changes to the "fat" field.
+func (m *IngredientMutation) ResetFat() {
+	m.fat = nil
+	m.addfat = nil
+}
+
+// SetCarbohydrates sets the "carbohydrates" field.
+func (m *IngredientMutation) SetCarbohydrates(f float32) {
+	m.carbohydrates = &f
+	m.addcarbohydrates = nil
+}
+
+// Carbohydrates returns the value of the "carbohydrates" field in the mutation.
+func (m *IngredientMutation) Carbohydrates() (r float32, exists bool) {
+	v := m.carbohydrates
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCarbohydrates returns the old "carbohydrates" field's value of the Ingredient entity.
+// If the Ingredient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IngredientMutation) OldCarbohydrates(ctx context.Context) (v float32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldCarbohydrates is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldCarbohydrates requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCarbohydrates: %w", err)
+	}
+	return oldValue.Carbohydrates, nil
+}
+
+// AddCarbohydrates adds f to the "carbohydrates" field.
+func (m *IngredientMutation) AddCarbohydrates(f float32) {
+	if m.addcarbohydrates != nil {
+		*m.addcarbohydrates += f
+	} else {
+		m.addcarbohydrates = &f
+	}
+}
+
+// AddedCarbohydrates returns the value that was added to the "carbohydrates" field in this mutation.
+func (m *IngredientMutation) AddedCarbohydrates() (r float32, exists bool) {
+	v := m.addcarbohydrates
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCarbohydrates resets all changes to the "carbohydrates" field.
+func (m *IngredientMutation) ResetCarbohydrates() {
+	m.carbohydrates = nil
+	m.addcarbohydrates = nil
+}
+
+// SetProtein sets the "protein" field.
+func (m *IngredientMutation) SetProtein(f float32) {
+	m.protein = &f
+	m.addprotein = nil
+}
+
+// Protein returns the value of the "protein" field in the mutation.
+func (m *IngredientMutation) Protein() (r float32, exists bool) {
+	v := m.protein
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProtein returns the old "protein" field's value of the Ingredient entity.
+// If the Ingredient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IngredientMutation) OldProtein(ctx context.Context) (v float32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldProtein is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldProtein requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProtein: %w", err)
+	}
+	return oldValue.Protein, nil
+}
+
+// AddProtein adds f to the "protein" field.
+func (m *IngredientMutation) AddProtein(f float32) {
+	if m.addprotein != nil {
+		*m.addprotein += f
+	} else {
+		m.addprotein = &f
+	}
+}
+
+// AddedProtein returns the value that was added to the "protein" field in this mutation.
+func (m *IngredientMutation) AddedProtein() (r float32, exists bool) {
+	v := m.addprotein
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetProtein resets all changes to the "protein" field.
+func (m *IngredientMutation) ResetProtein() {
+	m.protein = nil
+	m.addprotein = nil
+}
+
+// Where appends a list predicates to the IngredientMutation builder.
+func (m *IngredientMutation) Where(ps ...predicate.Ingredient) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *IngredientMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Ingredient).
+func (m *IngredientMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *IngredientMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.name != nil {
+		fields = append(fields, ingredient.FieldName)
+	}
+	if m.calories != nil {
+		fields = append(fields, ingredient.FieldCalories)
+	}
+	if m.fat != nil {
+		fields = append(fields, ingredient.FieldFat)
+	}
+	if m.carbohydrates != nil {
+		fields = append(fields, ingredient.FieldCarbohydrates)
+	}
+	if m.protein != nil {
+		fields = append(fields, ingredient.FieldProtein)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *IngredientMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case ingredient.FieldName:
+		return m.Name()
+	case ingredient.FieldCalories:
+		return m.Calories()
+	case ingredient.FieldFat:
+		return m.Fat()
+	case ingredient.FieldCarbohydrates:
+		return m.Carbohydrates()
+	case ingredient.FieldProtein:
+		return m.Protein()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *IngredientMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case ingredient.FieldName:
+		return m.OldName(ctx)
+	case ingredient.FieldCalories:
+		return m.OldCalories(ctx)
+	case ingredient.FieldFat:
+		return m.OldFat(ctx)
+	case ingredient.FieldCarbohydrates:
+		return m.OldCarbohydrates(ctx)
+	case ingredient.FieldProtein:
+		return m.OldProtein(ctx)
+	}
+	return nil, fmt.Errorf("unknown Ingredient field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *IngredientMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case ingredient.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case ingredient.FieldCalories:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCalories(v)
+		return nil
+	case ingredient.FieldFat:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFat(v)
+		return nil
+	case ingredient.FieldCarbohydrates:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCarbohydrates(v)
+		return nil
+	case ingredient.FieldProtein:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProtein(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Ingredient field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *IngredientMutation) AddedFields() []string {
+	var fields []string
+	if m.addcalories != nil {
+		fields = append(fields, ingredient.FieldCalories)
+	}
+	if m.addfat != nil {
+		fields = append(fields, ingredient.FieldFat)
+	}
+	if m.addcarbohydrates != nil {
+		fields = append(fields, ingredient.FieldCarbohydrates)
+	}
+	if m.addprotein != nil {
+		fields = append(fields, ingredient.FieldProtein)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *IngredientMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case ingredient.FieldCalories:
+		return m.AddedCalories()
+	case ingredient.FieldFat:
+		return m.AddedFat()
+	case ingredient.FieldCarbohydrates:
+		return m.AddedCarbohydrates()
+	case ingredient.FieldProtein:
+		return m.AddedProtein()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *IngredientMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case ingredient.FieldCalories:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCalories(v)
+		return nil
+	case ingredient.FieldFat:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFat(v)
+		return nil
+	case ingredient.FieldCarbohydrates:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCarbohydrates(v)
+		return nil
+	case ingredient.FieldProtein:
+		v, ok := value.(float32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProtein(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Ingredient numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *IngredientMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *IngredientMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *IngredientMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Ingredient nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *IngredientMutation) ResetField(name string) error {
+	switch name {
+	case ingredient.FieldName:
+		m.ResetName()
+		return nil
+	case ingredient.FieldCalories:
+		m.ResetCalories()
+		return nil
+	case ingredient.FieldFat:
+		m.ResetFat()
+		return nil
+	case ingredient.FieldCarbohydrates:
+		m.ResetCarbohydrates()
+		return nil
+	case ingredient.FieldProtein:
+		m.ResetProtein()
+		return nil
+	}
+	return fmt.Errorf("unknown Ingredient field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *IngredientMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *IngredientMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *IngredientMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *IngredientMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *IngredientMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *IngredientMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *IngredientMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Ingredient unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *IngredientMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Ingredient edge %s", name)
+}
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
