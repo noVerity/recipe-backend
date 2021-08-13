@@ -39,14 +39,13 @@ func main() {
 	}
 
 	// Set up the routes available in the API
-	r := SetupRouter(client)
+	r := SetupRouter(client, gin.Default())
 	r.Run()
 }
 
-func SetupRouter(client *ent.Client) *gin.Engine {
-	r := gin.Default()
-
+func SetupRouter(client *ent.Client, r *gin.Engine) *gin.Engine {
 	SetupUserRoutes(r, client)
+	SetupIngredientRoutes(r, client)
 
 	return r
 }

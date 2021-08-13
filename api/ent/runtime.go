@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"adomeit.xyz/recipe/ent/ingredient"
 	"adomeit.xyz/recipe/ent/schema"
 	"adomeit.xyz/recipe/ent/user"
 )
@@ -11,6 +12,12 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	ingredientFields := schema.Ingredient{}.Fields()
+	_ = ingredientFields
+	// ingredientDescName is the schema descriptor for name field.
+	ingredientDescName := ingredientFields[1].Descriptor()
+	// ingredient.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	ingredient.NameValidator = ingredientDescName.Validators[0].(func(string) error)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.

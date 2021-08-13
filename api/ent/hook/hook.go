@@ -9,6 +9,19 @@ import (
 	"adomeit.xyz/recipe/ent"
 )
 
+// The IngredientFunc type is an adapter to allow the use of ordinary
+// function as Ingredient mutator.
+type IngredientFunc func(context.Context, *ent.IngredientMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f IngredientFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.IngredientMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IngredientMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
