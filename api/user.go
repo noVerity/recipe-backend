@@ -63,7 +63,7 @@ func HandleCreateUser(client *ent.Client) func(c *gin.Context) {
 			return
 		}
 
-		c.JSON(200, UserModelToResponse(createdUser))
+		c.JSON(http.StatusOK, UserModelToResponse(createdUser))
 	}
 }
 
@@ -88,6 +88,6 @@ func HandleLogin(client *ent.Client) func(c *gin.Context) {
 			return
 		}
 
-		c.JSON(200, UserModelToResponse(foundUser))
+		c.JSON(http.StatusOK, UserModelToResponse(foundUser))
 	}
 }

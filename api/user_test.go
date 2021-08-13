@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,40 +11,88 @@ func TestSetupUserRoutes(t *testing.T) {
 	client, requestTester := SetupTestORM(t)
 	defer client.Close()
 
-	// Invalid payload: Invalid JSON
-	w := requestTester("POST", "/user", `{"user":"Frodo,"email":"frodo@shire.me","password":"myprecious"}`)
+	userRoute := "/user"
+	loginRoute := "/login"
 
-	assert.Equal(t, 400, w.Code)
-	assert.Equal(t, `{"error":"invalid character 'e' after object key:value pair"}`, w.Body.String())
+	// Invalid payload: Invalid JSON
+	w := requestTester(
+		http.MethodPost,
+		userRoute,
+		`{
+			"user""Frodo",
+			"email":"frodo@shire.me",
+			"password":"myprecious"
+		}`,
+	)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "{\"error\":\"invalid character '\\\"' after object key\"}", w.Body.String())
 
 	// Valid user registering
-	w = requestTester("POST", "/user", `{"username":"Frodo","email":"frodo@shire.me","password":"myprecious"}`)
+	w = requestTester(
+		http.MethodPost,
+		userRoute,
+		`{
+			"username":"Frodo",
+			"email":"frodo@shire.me",
+			"password":"myprecious"
+		}`,
+	)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, `{"username":"Frodo","email":"frodo@shire.me"}`, w.Body.String())
 
 	// Same user trying to register again
-	w = requestTester("POST", "/user", `{"username":"Frodo","email":"frodo@shire.me","password":"myprecious"}`)
+	w = requestTester(
+		http.MethodPost,
+		userRoute,
+		`{
+			"username":"Frodo",
+			"email":"frodo@shire.me",
+			"password":"myprecious"
+		}`,
+	)
 
-	assert.Equal(t, 409, w.Code)
+	assert.Equal(t, http.StatusConflict, w.Code)
 	assert.Equal(t, `{"error":"User or email already taken"}`, w.Body.String())
 
 	// Valid user logging in
-	w = requestTester("POST", "/login", `{"username":"Frodo","password":"myprecious"}`)
+	w = requestTester(
+		http.MethodPost,
+		loginRoute,
+		`{
+			"username":"Frodo",
+			"password":"myprecious"
+		}`,
+	)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, `{"username":"Frodo","email":"frodo@shire.me"}`, w.Body.String())
 
 	// Wrong password
-	w = requestTester("POST", "/login", `{"username":"Frodo","password":"sam4ever"}`)
+	w = requestTester(
+		http.MethodPost,
+		loginRoute,
+		`{
+			"username":"Frodo",
+			"password":"sam4ever"
+		}`,
+	)
 
-	assert.Equal(t, 401, w.Code)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
 	assert.Equal(t, `{"error":"Invalid username/password"}`, w.Body.String())
 
 	// Invalid payload: Invalid JSON
-	w = requestTester("POST", "/login", `{"user":"Frodo,"password":"myprecious"}`)
+	w = requestTester(
+		http.MethodPost,
+		loginRoute,
+		`{
+			"user""Frodo",
+			"password":"myprecious"
+		}`,
+	)
 
-	assert.Equal(t, 400, w.Code)
-	assert.Equal(t, `{"error":"invalid character 'p' after object key:value pair"}`, w.Body.String())
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, "{\"error\":\"invalid character '\\\"' after object key\"}", w.Body.String())
 
 }
