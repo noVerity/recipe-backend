@@ -95,7 +95,7 @@ func (controller *RecipeController) HandleCreateRecipe(c *gin.Context) {
 		SetSlug(slug).
 		SetIngredientslist(newRecipe.IngredientsList).
 		SetInstructions(newRecipe.Instructions).
-		SetNutrition(newRecipe.Instructions).
+		SetNutrition("").
 		SetServings(newRecipe.Servings).
 		AddIngredients(foundIngredients...).
 		Save(c)
@@ -254,7 +254,7 @@ func (controller *RecipeController) HandleDeleteRecipe(c *gin.Context) {
 	}
 
 	result, err := controller.client.Recipe.Query().
-		Where(recipe.NameEqualFold(uriElement.Name)).
+		Where(recipe.Slug(uriElement.Name)).
 		First(c)
 
 	if err != nil {

@@ -60,7 +60,7 @@ func TestSetupRecipeRoutes(t *testing.T) {
 	)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"Throw everything together and hope for the best","servings":1}`, w.Body.String())
+	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":1}`, w.Body.String())
 
 	// Retrieve the created recipe
 	w = requestTester(
@@ -70,7 +70,7 @@ func TestSetupRecipeRoutes(t *testing.T) {
 	)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"Throw everything together and hope for the best","servings":1,"ingredients":[{"name":"Hope","calories":999,"fat":1,"carbohydrates":2,"protein":3},{"name":"Banana","calories":123.4,"fat":3,"carbohydrates":2,"protein":1}]}`, w.Body.String())
+	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":1,"ingredients":[{"name":"Hope","calories":999,"fat":1,"carbohydrates":2,"protein":3},{"name":"Banana","calories":123.4,"fat":3,"carbohydrates":2,"protein":1}]}`, w.Body.String())
 
 	// Retrieve the all recipes
 	w = requestTester(
@@ -80,7 +80,7 @@ func TestSetupRecipeRoutes(t *testing.T) {
 	)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"pagination":{"count":1,"offset":0},"data":[{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"Throw everything together and hope for the best","servings":1}]}`, w.Body.String())
+	assert.Equal(t, `{"pagination":{"count":1,"offset":0},"data":[{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":1}]}`, w.Body.String())
 
 	// Update recipe
 	w = requestTester(
@@ -95,6 +95,16 @@ func TestSetupRecipeRoutes(t *testing.T) {
 	)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"Throw everything together and hope for the best","servings":4}`, w.Body.String())
+	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":4}`, w.Body.String())
+
+	// Delete recipe
+	w = requestTester(
+		http.MethodDelete,
+		recipeRoute+"/the-cake",
+		``,
+	)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":4}`, w.Body.String())
 
 }
