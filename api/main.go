@@ -44,8 +44,9 @@ func main() {
 }
 
 func SetupRouter(client *ent.Client, r *gin.Engine) *gin.Engine {
-	SetupUserRoutes(r, client)
-	SetupIngredientRoutes(r, client)
+	NewUserController(r, client)
+	NewIngredientController(r, client)
+	NewRecipeController(r, client)
 
 	return r
 }

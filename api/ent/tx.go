@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Ingredient is the client for interacting with the Ingredient builders.
 	Ingredient *IngredientClient
+	// Recipe is the client for interacting with the Recipe builders.
+	Recipe *RecipeClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -152,6 +154,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Ingredient = NewIngredientClient(tx.config)
+	tx.Recipe = NewRecipeClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

@@ -1,11 +1,13 @@
 module adomeit.xyz/recipe
 
 go 1.16
+
 // +heroku goVersion 1.16
 
 require (
 	entgo.io/ent v0.9.0
 	github.com/gin-gonic/gin v1.7.3
+	github.com/gosimple/slug v1.10.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/stretchr/testify v1.7.0

@@ -10,10 +10,12 @@ import (
 	"adomeit.xyz/recipe/ent/migrate"
 
 	"adomeit.xyz/recipe/ent/ingredient"
+	"adomeit.xyz/recipe/ent/recipe"
 	"adomeit.xyz/recipe/ent/user"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -23,6 +25,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Ingredient is the client for interacting with the Ingredient builders.
 	Ingredient *IngredientClient
+	// Recipe is the client for interacting with the Recipe builders.
+	Recipe *RecipeClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -39,6 +43,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Ingredient = NewIngredientClient(c.config)
+	c.Recipe = NewRecipeClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -74,6 +79,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:        ctx,
 		config:     cfg,
 		Ingredient: NewIngredientClient(cfg),
+		Recipe:     NewRecipeClient(cfg),
 		User:       NewUserClient(cfg),
 	}, nil
 }
@@ -94,6 +100,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		config:     cfg,
 		Ingredient: NewIngredientClient(cfg),
+		Recipe:     NewRecipeClient(cfg),
 		User:       NewUserClient(cfg),
 	}, nil
 }
@@ -125,6 +132,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Ingredient.Use(hooks...)
+	c.Recipe.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -213,9 +221,131 @@ func (c *IngredientClient) GetX(ctx context.Context, id int) *Ingredient {
 	return obj
 }
 
+// QueryRecipe queries the recipe edge of a Ingredient.
+func (c *IngredientClient) QueryRecipe(i *Ingredient) *RecipeQuery {
+	query := &RecipeQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ingredient.Table, ingredient.FieldID, id),
+			sqlgraph.To(recipe.Table, recipe.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, ingredient.RecipeTable, ingredient.RecipePrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *IngredientClient) Hooks() []Hook {
 	return c.hooks.Ingredient
+}
+
+// RecipeClient is a client for the Recipe schema.
+type RecipeClient struct {
+	config
+}
+
+// NewRecipeClient returns a client for the Recipe from the given config.
+func NewRecipeClient(c config) *RecipeClient {
+	return &RecipeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `recipe.Hooks(f(g(h())))`.
+func (c *RecipeClient) Use(hooks ...Hook) {
+	c.hooks.Recipe = append(c.hooks.Recipe, hooks...)
+}
+
+// Create returns a create builder for Recipe.
+func (c *RecipeClient) Create() *RecipeCreate {
+	mutation := newRecipeMutation(c.config, OpCreate)
+	return &RecipeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Recipe entities.
+func (c *RecipeClient) CreateBulk(builders ...*RecipeCreate) *RecipeCreateBulk {
+	return &RecipeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Recipe.
+func (c *RecipeClient) Update() *RecipeUpdate {
+	mutation := newRecipeMutation(c.config, OpUpdate)
+	return &RecipeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RecipeClient) UpdateOne(r *Recipe) *RecipeUpdateOne {
+	mutation := newRecipeMutation(c.config, OpUpdateOne, withRecipe(r))
+	return &RecipeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RecipeClient) UpdateOneID(id int) *RecipeUpdateOne {
+	mutation := newRecipeMutation(c.config, OpUpdateOne, withRecipeID(id))
+	return &RecipeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Recipe.
+func (c *RecipeClient) Delete() *RecipeDelete {
+	mutation := newRecipeMutation(c.config, OpDelete)
+	return &RecipeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *RecipeClient) DeleteOne(r *Recipe) *RecipeDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *RecipeClient) DeleteOneID(id int) *RecipeDeleteOne {
+	builder := c.Delete().Where(recipe.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RecipeDeleteOne{builder}
+}
+
+// Query returns a query builder for Recipe.
+func (c *RecipeClient) Query() *RecipeQuery {
+	return &RecipeQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Recipe entity by its id.
+func (c *RecipeClient) Get(ctx context.Context, id int) (*Recipe, error) {
+	return c.Query().Where(recipe.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RecipeClient) GetX(ctx context.Context, id int) *Recipe {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryIngredients queries the ingredients edge of a Recipe.
+func (c *RecipeClient) QueryIngredients(r *Recipe) *IngredientQuery {
+	query := &IngredientQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(recipe.Table, recipe.FieldID, id),
+			sqlgraph.To(ingredient.Table, ingredient.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, recipe.IngredientsTable, recipe.IngredientsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RecipeClient) Hooks() []Hook {
+	return c.hooks.Recipe
 }
 
 // UserClient is a client for the User schema.

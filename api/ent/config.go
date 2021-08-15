@@ -25,6 +25,7 @@ type config struct {
 // hooks per client, for fast access.
 type hooks struct {
 	Ingredient []ent.Hook
+	Recipe     []ent.Hook
 	User       []ent.Hook
 }
 

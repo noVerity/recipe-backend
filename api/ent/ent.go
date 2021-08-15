@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"adomeit.xyz/recipe/ent/ingredient"
+	"adomeit.xyz/recipe/ent/recipe"
 	"adomeit.xyz/recipe/ent/user"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -31,6 +32,7 @@ type OrderFunc func(*sql.Selector)
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		ingredient.Table: ingredient.ValidColumn,
+		recipe.Table:     recipe.ValidColumn,
 		user.Table:       user.ValidColumn,
 	}
 	check, ok := checks[table]

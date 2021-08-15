@@ -5,6 +5,7 @@ package ingredient
 import (
 	"adomeit.xyz/recipe/ent/predicate"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -537,6 +538,34 @@ func ProteinLT(v float32) predicate.Ingredient {
 func ProteinLTE(v float32) predicate.Ingredient {
 	return predicate.Ingredient(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldProtein), v))
+	})
+}
+
+// HasRecipe applies the HasEdge predicate on the "recipe" edge.
+func HasRecipe() predicate.Ingredient {
+	return predicate.Ingredient(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RecipeTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RecipeTable, RecipePrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRecipeWith applies the HasEdge predicate on the "recipe" edge with a given conditions (other predicates).
+func HasRecipeWith(preds ...predicate.Recipe) predicate.Ingredient {
+	return predicate.Ingredient(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RecipeInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RecipeTable, RecipePrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

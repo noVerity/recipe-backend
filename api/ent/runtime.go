@@ -4,6 +4,7 @@ package ent
 
 import (
 	"adomeit.xyz/recipe/ent/ingredient"
+	"adomeit.xyz/recipe/ent/recipe"
 	"adomeit.xyz/recipe/ent/schema"
 	"adomeit.xyz/recipe/ent/user"
 )
@@ -18,6 +19,20 @@ func init() {
 	ingredientDescName := ingredientFields[1].Descriptor()
 	// ingredient.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	ingredient.NameValidator = ingredientDescName.Validators[0].(func(string) error)
+	recipeFields := schema.Recipe{}.Fields()
+	_ = recipeFields
+	// recipeDescSlug is the schema descriptor for slug field.
+	recipeDescSlug := recipeFields[1].Descriptor()
+	// recipe.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	recipe.SlugValidator = recipeDescSlug.Validators[0].(func(string) error)
+	// recipeDescName is the schema descriptor for name field.
+	recipeDescName := recipeFields[2].Descriptor()
+	// recipe.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	recipe.NameValidator = recipeDescName.Validators[0].(func(string) error)
+	// recipeDescServings is the schema descriptor for servings field.
+	recipeDescServings := recipeFields[6].Descriptor()
+	// recipe.ServingsValidator is a validator for the "servings" field. It is called by the builders before save.
+	recipe.ServingsValidator = recipeDescServings.Validators[0].(func(int) error)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.

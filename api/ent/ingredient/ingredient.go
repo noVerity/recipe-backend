@@ -17,8 +17,15 @@ const (
 	FieldCarbohydrates = "carbohydrates"
 	// FieldProtein holds the string denoting the protein field in the database.
 	FieldProtein = "protein"
+	// EdgeRecipe holds the string denoting the recipe edge name in mutations.
+	EdgeRecipe = "recipe"
 	// Table holds the table name of the ingredient in the database.
 	Table = "ingredients"
+	// RecipeTable is the table that holds the recipe relation/edge. The primary key declared below.
+	RecipeTable = "recipe_ingredients"
+	// RecipeInverseTable is the table name for the Recipe entity.
+	// It exists in this package in order to avoid circular dependency with the "recipe" package.
+	RecipeInverseTable = "recipes"
 )
 
 // Columns holds all SQL columns for ingredient fields.
@@ -30,6 +37,12 @@ var Columns = []string{
 	FieldCarbohydrates,
 	FieldProtein,
 }
+
+var (
+	// RecipePrimaryKey and RecipeColumn2 are the table columns denoting the
+	// primary key for the recipe relation (M2M).
+	RecipePrimaryKey = []string{"recipe_id", "ingredient_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

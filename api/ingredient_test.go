@@ -61,22 +61,6 @@ func TestSetupIngredientRoutes(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, w.Code)
 	assert.Equal(t, `{"error":"ingredient with this name already exists"}`, w.Body.String())
 
-	// Update on invalid URL
-	w = requestTester(
-		http.MethodPut,
-		ingredientRoute+"/",
-		`{
-			"name":"Potatoes",
-			"calories":2,
-			"fat":2,
-			"carbohydrates":3.4,
-			"protein":5
-		}`,
-	)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Equal(t, `{"error":"Key: 'URIElement.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`, w.Body.String())
-
 	// Update with wrong types
 	w = requestTester(
 		http.MethodPut,
@@ -139,7 +123,6 @@ func TestSetupIngredientRoutes(t *testing.T) {
 
 	// Page too far when getting all ingredients
 	w = requestTester(http.MethodGet, ingredientRoute+"?offset=1000&limit=1", ``)
-
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, `{"pagination":{"count":1,"offset":1000},"data":[]}`, w.Body.String())
 
@@ -160,11 +143,5 @@ func TestSetupIngredientRoutes(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 	assert.Equal(t, `{"error":"ingredient not found"}`, w.Body.String())
-
-	// Can't delete on root path
-	w = requestTester(http.MethodDelete, ingredientRoute+"/", ``)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Equal(t, `{"error":"Key: 'URIElement.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`, w.Body.String())
 
 }

@@ -22,6 +22,19 @@ func (f IngredientFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return f(ctx, mv)
 }
 
+// The RecipeFunc type is an adapter to allow the use of ordinary
+// function as Recipe mutator.
+type RecipeFunc func(context.Context, *ent.RecipeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RecipeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.RecipeMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RecipeMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

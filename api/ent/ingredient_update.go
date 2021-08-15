@@ -8,6 +8,7 @@ import (
 
 	"adomeit.xyz/recipe/ent/ingredient"
 	"adomeit.xyz/recipe/ent/predicate"
+	"adomeit.xyz/recipe/ent/recipe"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -84,9 +85,45 @@ func (iu *IngredientUpdate) AddProtein(f float32) *IngredientUpdate {
 	return iu
 }
 
+// AddRecipeIDs adds the "recipe" edge to the Recipe entity by IDs.
+func (iu *IngredientUpdate) AddRecipeIDs(ids ...int) *IngredientUpdate {
+	iu.mutation.AddRecipeIDs(ids...)
+	return iu
+}
+
+// AddRecipe adds the "recipe" edges to the Recipe entity.
+func (iu *IngredientUpdate) AddRecipe(r ...*Recipe) *IngredientUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return iu.AddRecipeIDs(ids...)
+}
+
 // Mutation returns the IngredientMutation object of the builder.
 func (iu *IngredientUpdate) Mutation() *IngredientMutation {
 	return iu.mutation
+}
+
+// ClearRecipe clears all "recipe" edges to the Recipe entity.
+func (iu *IngredientUpdate) ClearRecipe() *IngredientUpdate {
+	iu.mutation.ClearRecipe()
+	return iu
+}
+
+// RemoveRecipeIDs removes the "recipe" edge to Recipe entities by IDs.
+func (iu *IngredientUpdate) RemoveRecipeIDs(ids ...int) *IngredientUpdate {
+	iu.mutation.RemoveRecipeIDs(ids...)
+	return iu
+}
+
+// RemoveRecipe removes "recipe" edges to Recipe entities.
+func (iu *IngredientUpdate) RemoveRecipe(r ...*Recipe) *IngredientUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return iu.RemoveRecipeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -240,6 +277,60 @@ func (iu *IngredientUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: ingredient.FieldProtein,
 		})
 	}
+	if iu.mutation.RecipeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ingredient.RecipeTable,
+			Columns: ingredient.RecipePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: recipe.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.RemovedRecipeIDs(); len(nodes) > 0 && !iu.mutation.RecipeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ingredient.RecipeTable,
+			Columns: ingredient.RecipePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: recipe.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.RecipeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ingredient.RecipeTable,
+			Columns: ingredient.RecipePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: recipe.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, iu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ingredient.Label}
@@ -317,9 +408,45 @@ func (iuo *IngredientUpdateOne) AddProtein(f float32) *IngredientUpdateOne {
 	return iuo
 }
 
+// AddRecipeIDs adds the "recipe" edge to the Recipe entity by IDs.
+func (iuo *IngredientUpdateOne) AddRecipeIDs(ids ...int) *IngredientUpdateOne {
+	iuo.mutation.AddRecipeIDs(ids...)
+	return iuo
+}
+
+// AddRecipe adds the "recipe" edges to the Recipe entity.
+func (iuo *IngredientUpdateOne) AddRecipe(r ...*Recipe) *IngredientUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return iuo.AddRecipeIDs(ids...)
+}
+
 // Mutation returns the IngredientMutation object of the builder.
 func (iuo *IngredientUpdateOne) Mutation() *IngredientMutation {
 	return iuo.mutation
+}
+
+// ClearRecipe clears all "recipe" edges to the Recipe entity.
+func (iuo *IngredientUpdateOne) ClearRecipe() *IngredientUpdateOne {
+	iuo.mutation.ClearRecipe()
+	return iuo
+}
+
+// RemoveRecipeIDs removes the "recipe" edge to Recipe entities by IDs.
+func (iuo *IngredientUpdateOne) RemoveRecipeIDs(ids ...int) *IngredientUpdateOne {
+	iuo.mutation.RemoveRecipeIDs(ids...)
+	return iuo
+}
+
+// RemoveRecipe removes "recipe" edges to Recipe entities.
+func (iuo *IngredientUpdateOne) RemoveRecipe(r ...*Recipe) *IngredientUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return iuo.RemoveRecipeIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -496,6 +623,60 @@ func (iuo *IngredientUpdateOne) sqlSave(ctx context.Context) (_node *Ingredient,
 			Value:  value,
 			Column: ingredient.FieldProtein,
 		})
+	}
+	if iuo.mutation.RecipeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ingredient.RecipeTable,
+			Columns: ingredient.RecipePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: recipe.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.RemovedRecipeIDs(); len(nodes) > 0 && !iuo.mutation.RecipeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ingredient.RecipeTable,
+			Columns: ingredient.RecipePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: recipe.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.RecipeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ingredient.RecipeTable,
+			Columns: ingredient.RecipePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: recipe.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Ingredient{config: iuo.config}
 	_spec.Assign = _node.assignValues

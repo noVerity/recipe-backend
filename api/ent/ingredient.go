@@ -25,6 +25,27 @@ type Ingredient struct {
 	Carbohydrates float32 `json:"carbohydrates,omitempty"`
 	// Protein holds the value of the "protein" field.
 	Protein float32 `json:"protein,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the IngredientQuery when eager-loading is set.
+	Edges IngredientEdges `json:"edges"`
+}
+
+// IngredientEdges holds the relations/edges for other nodes in the graph.
+type IngredientEdges struct {
+	// Recipe holds the value of the recipe edge.
+	Recipe []*Recipe `json:"recipe,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// RecipeOrErr returns the Recipe value or an error if the edge
+// was not loaded in eager-loading.
+func (e IngredientEdges) RecipeOrErr() ([]*Recipe, error) {
+	if e.loadedTypes[0] {
+		return e.Recipe, nil
+	}
+	return nil, &NotLoadedError{edge: "recipe"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -92,6 +113,11 @@ func (i *Ingredient) assignValues(columns []string, values []interface{}) error 
 		}
 	}
 	return nil
+}
+
+// QueryRecipe queries the "recipe" edge of the Ingredient entity.
+func (i *Ingredient) QueryRecipe() *RecipeQuery {
+	return (&IngredientClient{config: i.config}).QueryRecipe(i)
 }
 
 // Update returns a builder for updating this Ingredient.
