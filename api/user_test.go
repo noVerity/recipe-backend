@@ -26,7 +26,6 @@ func TestSetupUserRoutes(t *testing.T) {
 	)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Equal(t, "{\"error\":\"invalid character '\\\"' after object key\"}", w.Body.String())
 
 	// Valid user registering
 	w = requestTester(
@@ -40,7 +39,6 @@ func TestSetupUserRoutes(t *testing.T) {
 	)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"username":"Frodo","email":"frodo@shire.me"}`, w.Body.String())
 
 	// Same user trying to register again
 	w = requestTester(
@@ -67,7 +65,6 @@ func TestSetupUserRoutes(t *testing.T) {
 	)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"username":"Frodo","email":"frodo@shire.me"}`, w.Body.String())
 
 	// Wrong password
 	w = requestTester(

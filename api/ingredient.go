@@ -46,9 +46,9 @@ type IngredientController struct {
 }
 
 // NewIngredientController takes the gin engine and creates routes for CRUD on ingredients
-func NewIngredientController(r *gin.Engine, client *ent.Client) *IngredientController {
+func NewIngredientController(r *gin.Engine, client *ent.Client, auth *AuthManager) *IngredientController {
 	controller := IngredientController{r, client}
-	userRoute := r.Group("/ingredient")
+	userRoute := r.Group("/ingredient", auth.AuthMiddleware())
 	{
 		userRoute.POST("", controller.HandleCreateIngredient)
 		userRoute.GET("", controller.HandleGetAllIngredients)
