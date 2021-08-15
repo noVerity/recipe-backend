@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"adomeit.xyz/recipe/ent/ingredient"
+	"adomeit.xyz/recipe/ent/recipe"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -53,6 +54,21 @@ func (ic *IngredientCreate) SetProtein(f float32) *IngredientCreate {
 func (ic *IngredientCreate) SetID(i int) *IngredientCreate {
 	ic.mutation.SetID(i)
 	return ic
+}
+
+// AddRecipeIDs adds the "recipe" edge to the Recipe entity by IDs.
+func (ic *IngredientCreate) AddRecipeIDs(ids ...int) *IngredientCreate {
+	ic.mutation.AddRecipeIDs(ids...)
+	return ic
+}
+
+// AddRecipe adds the "recipe" edges to the Recipe entity.
+func (ic *IngredientCreate) AddRecipe(r ...*Recipe) *IngredientCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ic.AddRecipeIDs(ids...)
 }
 
 // Mutation returns the IngredientMutation object of the builder.
@@ -217,6 +233,25 @@ func (ic *IngredientCreate) createSpec() (*Ingredient, *sqlgraph.CreateSpec) {
 			Column: ingredient.FieldProtein,
 		})
 		_node.Protein = value
+	}
+	if nodes := ic.mutation.RecipeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ingredient.RecipeTable,
+			Columns: ingredient.RecipePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: recipe.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

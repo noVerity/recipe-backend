@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
 
 	"adomeit.xyz/recipe/ent/ingredient"
 	"adomeit.xyz/recipe/ent/predicate"
+	"adomeit.xyz/recipe/ent/recipe"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -24,6 +26,8 @@ type IngredientQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Ingredient
+	// eager-loading edges.
+	withRecipe *RecipeQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +62,28 @@ func (iq *IngredientQuery) Unique(unique bool) *IngredientQuery {
 func (iq *IngredientQuery) Order(o ...OrderFunc) *IngredientQuery {
 	iq.order = append(iq.order, o...)
 	return iq
+}
+
+// QueryRecipe chains the current query on the "recipe" edge.
+func (iq *IngredientQuery) QueryRecipe() *RecipeQuery {
+	query := &RecipeQuery{config: iq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := iq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := iq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ingredient.Table, ingredient.FieldID, selector),
+			sqlgraph.To(recipe.Table, recipe.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, ingredient.RecipeTable, ingredient.RecipePrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Ingredient entity from the query.
@@ -241,10 +267,22 @@ func (iq *IngredientQuery) Clone() *IngredientQuery {
 		offset:     iq.offset,
 		order:      append([]OrderFunc{}, iq.order...),
 		predicates: append([]predicate.Ingredient{}, iq.predicates...),
+		withRecipe: iq.withRecipe.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
 		path: iq.path,
 	}
+}
+
+// WithRecipe tells the query-builder to eager-load the nodes that are connected to
+// the "recipe" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *IngredientQuery) WithRecipe(opts ...func(*RecipeQuery)) *IngredientQuery {
+	query := &RecipeQuery{config: iq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	iq.withRecipe = query
+	return iq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -310,8 +348,11 @@ func (iq *IngredientQuery) prepareQuery(ctx context.Context) error {
 
 func (iq *IngredientQuery) sqlAll(ctx context.Context) ([]*Ingredient, error) {
 	var (
-		nodes = []*Ingredient{}
-		_spec = iq.querySpec()
+		nodes       = []*Ingredient{}
+		_spec       = iq.querySpec()
+		loadedTypes = [1]bool{
+			iq.withRecipe != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Ingredient{config: iq.config}
@@ -323,6 +364,7 @@ func (iq *IngredientQuery) sqlAll(ctx context.Context) ([]*Ingredient, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, iq.driver, _spec); err != nil {
@@ -331,6 +373,72 @@ func (iq *IngredientQuery) sqlAll(ctx context.Context) ([]*Ingredient, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := iq.withRecipe; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Ingredient, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.Recipe = []*Recipe{}
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Ingredient)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: true,
+				Table:   ingredient.RecipeTable,
+				Columns: ingredient.RecipePrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(ingredient.RecipePrimaryKey[1], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, iq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "recipe": %w`, err)
+		}
+		query.Where(recipe.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "recipe" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Recipe = append(nodes[i].Edges.Recipe, n)
+			}
+		}
+	}
+
 	return nodes, nil
 }
 

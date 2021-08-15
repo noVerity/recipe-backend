@@ -23,6 +23,22 @@ var (
 		Columns:    IngredientsColumns,
 		PrimaryKey: []*schema.Column{IngredientsColumns[0]},
 	}
+	// RecipesColumns holds the columns for the "recipes" table.
+	RecipesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "slug", Type: field.TypeString, Unique: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "ingredientslist", Type: field.TypeString},
+		{Name: "instructions", Type: field.TypeString},
+		{Name: "nutrition", Type: field.TypeString},
+		{Name: "servings", Type: field.TypeInt},
+	}
+	// RecipesTable holds the schema information for the "recipes" table.
+	RecipesTable = &schema.Table{
+		Name:       "recipes",
+		Columns:    RecipesColumns,
+		PrimaryKey: []*schema.Column{RecipesColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -36,12 +52,41 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// RecipeIngredientsColumns holds the columns for the "recipe_ingredients" table.
+	RecipeIngredientsColumns = []*schema.Column{
+		{Name: "recipe_id", Type: field.TypeInt},
+		{Name: "ingredient_id", Type: field.TypeInt},
+	}
+	// RecipeIngredientsTable holds the schema information for the "recipe_ingredients" table.
+	RecipeIngredientsTable = &schema.Table{
+		Name:       "recipe_ingredients",
+		Columns:    RecipeIngredientsColumns,
+		PrimaryKey: []*schema.Column{RecipeIngredientsColumns[0], RecipeIngredientsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "recipe_ingredients_recipe_id",
+				Columns:    []*schema.Column{RecipeIngredientsColumns[0]},
+				RefColumns: []*schema.Column{RecipesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "recipe_ingredients_ingredient_id",
+				Columns:    []*schema.Column{RecipeIngredientsColumns[1]},
+				RefColumns: []*schema.Column{IngredientsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		IngredientsTable,
+		RecipesTable,
 		UsersTable,
+		RecipeIngredientsTable,
 	}
 )
 
 func init() {
+	RecipeIngredientsTable.ForeignKeys[0].RefTable = RecipesTable
+	RecipeIngredientsTable.ForeignKeys[1].RefTable = IngredientsTable
 }
