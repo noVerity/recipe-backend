@@ -24,12 +24,21 @@ terraform {
 provider "heroku" {
 }
 
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "_%@"
+}
+
 resource "heroku_app" "api" {
   name   = "${local.recipe_app_name}-api"
   region = var.heroku_region
 
   config_vars = {
     GIN_MODE = "release"
+  }
+  sensitive_config_vars = {
+    JWT_SECRET = random_password.password.result
   }
 }
 
