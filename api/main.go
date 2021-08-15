@@ -45,6 +45,7 @@ func main() {
 	r.Run()
 }
 
+
 func SetupRouter(client *ent.Client, r *gin.Engine, auth *AuthManager) *gin.Engine {
 	NewUserController(r, client, auth)
 	NewIngredientController(r, client, auth)
