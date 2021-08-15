@@ -18,29 +18,38 @@ type UserRequest struct {
 type UserResponse struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
-}
-
-func UserModelToResponse(user *ent.User) UserResponse {
-	return UserResponse{
-		Username: user.Username,
-		Email:    user.Email,
-	}
+	Jwt      string `json:"jwt"`
 }
 
 type UserController struct {
 	router *gin.Engine
 	client *ent.Client
+	auth   *AuthManager
 }
 
 // NewUserController takes the gin engine and creates routes for user sign up and login
-func NewUserController(r *gin.Engine, client *ent.Client) *UserController {
-	controller := UserController{r, client}
+func NewUserController(r *gin.Engine, client *ent.Client, auth *AuthManager) *UserController {
+	controller := UserController{r, client, auth}
 	userRoute := r.Group("/user")
 	{
 		userRoute.POST("", controller.HandleCreateUser)
 	}
 	r.POST("/login", controller.HandleLogin)
 	return &controller
+}
+
+func (controller *UserController) UserModelToResponse(user *ent.User) (UserResponse, error) {
+	tokenString, err := controller.auth.GetToken(user.Username)
+
+	if err != nil {
+		return UserResponse{}, err
+	}
+
+	return UserResponse{
+		Username: user.Username,
+		Email:    user.Email,
+		Jwt:      tokenString,
+	}, nil
 }
 
 // HandleCreateUser creates a route handler to allow registering of a user
@@ -69,7 +78,14 @@ func (controller *UserController) HandleCreateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, UserModelToResponse(createdUser))
+	userResponse, err := controller.UserModelToResponse(createdUser)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, userResponse)
 }
 
 // HandleLogin creates a route handler that checks if a user/password combination is valid
@@ -92,5 +108,12 @@ func (controller *UserController) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, UserModelToResponse(foundUser))
+	userResponse, err := controller.UserModelToResponse(foundUser)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, userResponse)
 }

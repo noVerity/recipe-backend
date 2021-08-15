@@ -7,6 +7,7 @@ go 1.16
 require (
 	entgo.io/ent v0.9.0
 	github.com/gin-gonic/gin v1.7.3
+	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/gosimple/slug v1.10.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/mattn/go-sqlite3 v1.14.8

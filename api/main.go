@@ -38,15 +38,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
+
 	// Set up the routes available in the API
-	r := SetupRouter(client, gin.Default())
+	r := SetupRouter(client, gin.Default(), manager)
 	r.Run()
 }
 
-func SetupRouter(client *ent.Client, r *gin.Engine) *gin.Engine {
-	NewUserController(r, client)
-	NewIngredientController(r, client)
-	NewRecipeController(r, client)
+func SetupRouter(client *ent.Client, r *gin.Engine, auth *AuthManager) *gin.Engine {
+	NewUserController(r, client, auth)
+	NewIngredientController(r, client, auth)
+	NewRecipeController(r, client, auth)
 
 	return r
 }
