@@ -69,7 +69,7 @@ resource "heroku_app" "forager" {
   region = var.heroku_region
 
   config_vars = {
-    "PYTHON_RUNTIME_VERSION" = "3.8.10",
+    "PYTHON_RUNTIME_VERSION" = "3.8.11",
     "POETRY_VERSION"         = "1.1.0",
     "WEB_CONCURRENCY"        = "3"
   }
