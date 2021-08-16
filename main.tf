@@ -63,3 +63,31 @@ resource "heroku_formation" "api" {
   size       = "free"
   depends_on = [heroku_build.api]
 }
+
+resource "heroku_app" "forager" {
+  name   = "${local.recipe_app_name}-forager"
+  region = var.heroku_region
+
+  config_vars = {
+    "PYTHON_RUNTIME_VERSION" = "3.8.10",
+    "POETRY_VERSION"         = "1.1.0",
+    "WEB_CONCURRENCY"        = "3"
+  }
+}
+
+resource "heroku_build" "forager" {
+  app        = heroku_app.forager.id
+  buildpacks = ["https://github.com/moneymeets/python-poetry-buildpack.git", "https://github.com/heroku/heroku-buildpack-python.git"]
+
+  source {
+    path = "forager"
+  }
+}
+
+resource "heroku_formation" "forager" {
+  app        = heroku_app.forager.id
+  type       = "web"
+  quantity   = 1
+  size       = "free"
+  depends_on = [heroku_build.forager]
+}
