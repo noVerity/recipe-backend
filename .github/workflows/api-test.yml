@@ -1,4 +1,4 @@
-name: Check GO Build
+name: Check API Build
 
 on:
   pull_request:

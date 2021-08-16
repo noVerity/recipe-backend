@@ -1,3 +1,5 @@
+.vscode/
+
 .terraform
 __pycache__/
 *.py[cod]
