@@ -1,0 +1,35 @@
+name: Check Forager Build
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'forager/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.8.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8.11
+
+      - name: Setup Poetry
+        uses: Gr1N/setup-poetry@v7
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      
+      - run: poetry install
+        working-directory: ./forager
+
+      - run: poetry run pytest
+        working-directory: ./forager
+
+    
