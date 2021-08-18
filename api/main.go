@@ -40,6 +40,8 @@ func main() {
 
 	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
 
+	go AcceptIngredientResults(client)
+
 	// Set up the routes available in the API
 	r := SetupRouter(client, gin.Default(), manager)
 	r.Run()

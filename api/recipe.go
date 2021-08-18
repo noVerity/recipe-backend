@@ -86,7 +86,7 @@ func (controller *RecipeController) HandleCreateRecipe(c *gin.Context) {
 		return
 	}
 
-	foundIngredients := controller.GetIngredientsFromList(newRecipe.IngredientsList, c)
+	foundIngredients, missingIngredients := controller.GetIngredientsFromList(newRecipe.IngredientsList, c)
 
 	// TODO: Calculate nutritional value for the recipe
 
@@ -104,6 +104,8 @@ func (controller *RecipeController) HandleCreateRecipe(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "recipe with this name already exists"})
 		return
 	}
+
+	RequestIngredients(missingIngredients, createdRecipe.ID)
 
 	c.JSON(http.StatusCreated, RecipeModelToResponse(createdRecipe))
 }
@@ -130,7 +132,7 @@ func (controller *RecipeController) HandleUpdateRecipe(c *gin.Context) {
 		return
 	}
 
-	foundIngredients := controller.GetIngredientsFromList(update.IngredientsList, c)
+	foundIngredients, missingIngredients := controller.GetIngredientsFromList(update.IngredientsList, c)
 
 	var ingredientsToRemove []*ent.Ingredient
 	var ingredientsToAdd []*ent.Ingredient
@@ -166,6 +168,8 @@ func (controller *RecipeController) HandleUpdateRecipe(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
+
+	RequestIngredients(missingIngredients, result.ID)
 
 	c.JSON(http.StatusOK, RecipeModelToResponse(result))
 }
@@ -272,7 +276,7 @@ func (controller *RecipeController) HandleDeleteRecipe(c *gin.Context) {
 	c.JSON(http.StatusOK, RecipeModelToResponse(result))
 }
 
-func (controller *RecipeController) GetIngredientsFromList(list string, c *gin.Context) []*ent.Ingredient {
+func (controller *RecipeController) GetIngredientsFromList(list string, c *gin.Context) ([]*ent.Ingredient, []IngredientEntry) {
 	ingredients := ParseIngredientList(list)
 
 	ingredientNames := make([]string, len(ingredients))
@@ -286,5 +290,20 @@ func (controller *RecipeController) GetIngredientsFromList(list string, c *gin.C
 		Where(ingredient.NameIn(ingredientNames...)).
 		All(c)
 
-	return foundIngredients
+	var missingIngredients []IngredientEntry
+
+	for _, entry := range ingredients {
+		found := false
+		for _, foundEntry := range foundIngredients {
+			if foundEntry.Name == entry.Name {
+				found = true
+				continue
+			}
+		}
+		if !found {
+			missingIngredients = append(missingIngredients, entry)
+		}
+	}
+
+	return foundIngredients, missingIngredients
 }

@@ -17,6 +17,8 @@ const (
 	FieldCarbohydrates = "carbohydrates"
 	// FieldProtein holds the string denoting the protein field in the database.
 	FieldProtein = "protein"
+	// FieldSource holds the string denoting the source field in the database.
+	FieldSource = "source"
 	// EdgeRecipe holds the string denoting the recipe edge name in mutations.
 	EdgeRecipe = "recipe"
 	// Table holds the table name of the ingredient in the database.
@@ -36,6 +38,7 @@ var Columns = []string{
 	FieldFat,
 	FieldCarbohydrates,
 	FieldProtein,
+	FieldSource,
 }
 
 var (

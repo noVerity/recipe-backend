@@ -50,6 +50,20 @@ func (ic *IngredientCreate) SetProtein(f float32) *IngredientCreate {
 	return ic
 }
 
+// SetSource sets the "source" field.
+func (ic *IngredientCreate) SetSource(s string) *IngredientCreate {
+	ic.mutation.SetSource(s)
+	return ic
+}
+
+// SetNillableSource sets the "source" field if the given value is not nil.
+func (ic *IngredientCreate) SetNillableSource(s *string) *IngredientCreate {
+	if s != nil {
+		ic.SetSource(*s)
+	}
+	return ic
+}
+
 // SetID sets the "id" field.
 func (ic *IngredientCreate) SetID(i int) *IngredientCreate {
 	ic.mutation.SetID(i)
@@ -233,6 +247,14 @@ func (ic *IngredientCreate) createSpec() (*Ingredient, *sqlgraph.CreateSpec) {
 			Column: ingredient.FieldProtein,
 		})
 		_node.Protein = value
+	}
+	if value, ok := ic.mutation.Source(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: ingredient.FieldSource,
+		})
+		_node.Source = &value
 	}
 	if nodes := ic.mutation.RecipeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

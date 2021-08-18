@@ -25,6 +25,8 @@ type Ingredient struct {
 	Carbohydrates float32 `json:"carbohydrates,omitempty"`
 	// Protein holds the value of the "protein" field.
 	Protein float32 `json:"protein,omitempty"`
+	// Source holds the value of the "source" field.
+	Source *string `json:"source,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IngredientQuery when eager-loading is set.
 	Edges IngredientEdges `json:"edges"`
@@ -57,7 +59,7 @@ func (*Ingredient) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullFloat64)
 		case ingredient.FieldID:
 			values[i] = new(sql.NullInt64)
-		case ingredient.FieldName:
+		case ingredient.FieldName, ingredient.FieldSource:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Ingredient", columns[i])
@@ -110,6 +112,13 @@ func (i *Ingredient) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				i.Protein = float32(value.Float64)
 			}
+		case ingredient.FieldSource:
+			if value, ok := values[j].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source", values[j])
+			} else if value.Valid {
+				i.Source = new(string)
+				*i.Source = value.String
+			}
 		}
 	}
 	return nil
@@ -153,6 +162,10 @@ func (i *Ingredient) String() string {
 	builder.WriteString(fmt.Sprintf("%v", i.Carbohydrates))
 	builder.WriteString(", protein=")
 	builder.WriteString(fmt.Sprintf("%v", i.Protein))
+	if v := i.Source; v != nil {
+		builder.WriteString(", source=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -8,6 +8,8 @@ authors = ["Florian Adomeit <florian@elsewhen.com>"]
 python = "^3.8"
 Flask = "^2.0.1"
 gunicorn = "^20.1.0"
+requests = "^2.26.0"
+pika = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

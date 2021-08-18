@@ -16,6 +16,7 @@ var (
 		{Name: "fat", Type: field.TypeFloat32},
 		{Name: "carbohydrates", Type: field.TypeFloat32},
 		{Name: "protein", Type: field.TypeFloat32},
+		{Name: "source", Type: field.TypeString, Nullable: true},
 	}
 	// IngredientsTable holds the schema information for the "ingredients" table.
 	IngredientsTable = &schema.Table{
