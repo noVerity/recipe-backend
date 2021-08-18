@@ -36,6 +36,7 @@ jobs:
         continue-on-error: true
         env:
           TF_VAR_name: adtest
+          TF_VAR_FOODDATA_TOKEN: ${{ secrets.FOODDATA_TOKEN }}
           HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 

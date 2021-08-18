@@ -25,7 +25,7 @@ type IngredientMQResult struct {
 }
 
 func RequestIngredients(entries []IngredientEntry, recipeID int) {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(getenv("CLOUDAMQP_URL", "amqp://guest:guest@localhost:5672/"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -66,7 +66,7 @@ func RequestIngredients(entries []IngredientEntry, recipeID int) {
 }
 
 func AcceptIngredientResults(client *ent.Client) {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(getenv("CLOUDAMQP_URL", "amqp://guest:guest@localhost:5672/"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
