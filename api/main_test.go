@@ -18,7 +18,7 @@ func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint strin
 
 	gin.SetMode(gin.ReleaseMode)
 	auth := NewAuthManager("TEST_SECRET")
-	router := SetupRouter(client, gin.New(), auth)
+	router := SetupRouter(client, gin.New(), auth, func(ingredients []IngredientEntry, recipeId int) {})
 	requestTester := GetJSONRequestTester(router, auth)
 
 	return client, requestTester

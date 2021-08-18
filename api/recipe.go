@@ -49,13 +49,14 @@ func RecipesToResponse(modelEntities []*ent.Recipe) []Recipe {
 }
 
 type RecipeController struct {
-	router *gin.Engine
-	client *ent.Client
+	router             *gin.Engine
+	client             *ent.Client
+	requestIngredients func(ingredients []IngredientEntry, recipeId int)
 }
 
 // NewRecipeController takes the gin engine and creates routes for CRUD on recipes
-func NewRecipeController(r *gin.Engine, client *ent.Client, auth *AuthManager) *RecipeController {
-	controller := RecipeController{r, client}
+func NewRecipeController(r *gin.Engine, client *ent.Client, auth *AuthManager, requestIngredients func(ingredients []IngredientEntry, recipeId int)) *RecipeController {
+	controller := RecipeController{r, client, requestIngredients}
 	userRoute := r.Group("/recipe", auth.AuthMiddleware())
 	{
 		userRoute.POST("", controller.HandleCreateRecipe)
@@ -105,7 +106,7 @@ func (controller *RecipeController) HandleCreateRecipe(c *gin.Context) {
 		return
 	}
 
-	RequestIngredients(missingIngredients, createdRecipe.ID)
+	controller.requestIngredients(missingIngredients, createdRecipe.ID)
 
 	c.JSON(http.StatusCreated, RecipeModelToResponse(createdRecipe))
 }
@@ -169,7 +170,7 @@ func (controller *RecipeController) HandleUpdateRecipe(c *gin.Context) {
 		return
 	}
 
-	RequestIngredients(missingIngredients, result.ID)
+	controller.requestIngredients(missingIngredients, result.ID)
 
 	c.JSON(http.StatusOK, RecipeModelToResponse(result))
 }
