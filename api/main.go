@@ -43,14 +43,14 @@ func main() {
 	go AcceptIngredientResults(client)
 
 	// Set up the routes available in the API
-	r := SetupRouter(client, gin.Default(), manager)
+	r := SetupRouter(client, gin.Default(), manager, RequestIngredients)
 	r.Run()
 }
 
-func SetupRouter(client *ent.Client, r *gin.Engine, auth *AuthManager) *gin.Engine {
+func SetupRouter(client *ent.Client, r *gin.Engine, auth *AuthManager, requestIngredients func(ingredients []IngredientEntry, recipeId int)) *gin.Engine {
 	NewUserController(r, client, auth)
 	NewIngredientController(r, client, auth)
-	NewRecipeController(r, client, auth)
+	NewRecipeController(r, client, auth, requestIngredients)
 
 	return r
 }
