@@ -44,6 +44,7 @@ type IngredientMutation struct {
 	addcarbohydrates *float32
 	protein          *float32
 	addprotein       *float32
+	source           *string
 	clearedFields    map[string]struct{}
 	recipe           map[int]struct{}
 	removedrecipe    map[int]struct{}
@@ -398,6 +399,55 @@ func (m *IngredientMutation) ResetProtein() {
 	m.addprotein = nil
 }
 
+// SetSource sets the "source" field.
+func (m *IngredientMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *IngredientMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Ingredient entity.
+// If the Ingredient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IngredientMutation) OldSource(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *IngredientMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[ingredient.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *IngredientMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[ingredient.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *IngredientMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, ingredient.FieldSource)
+}
+
 // AddRecipeIDs adds the "recipe" edge to the Recipe entity by ids.
 func (m *IngredientMutation) AddRecipeIDs(ids ...int) {
 	if m.recipe == nil {
@@ -471,7 +521,7 @@ func (m *IngredientMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *IngredientMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, ingredient.FieldName)
 	}
@@ -486,6 +536,9 @@ func (m *IngredientMutation) Fields() []string {
 	}
 	if m.protein != nil {
 		fields = append(fields, ingredient.FieldProtein)
+	}
+	if m.source != nil {
+		fields = append(fields, ingredient.FieldSource)
 	}
 	return fields
 }
@@ -505,6 +558,8 @@ func (m *IngredientMutation) Field(name string) (ent.Value, bool) {
 		return m.Carbohydrates()
 	case ingredient.FieldProtein:
 		return m.Protein()
+	case ingredient.FieldSource:
+		return m.Source()
 	}
 	return nil, false
 }
@@ -524,6 +579,8 @@ func (m *IngredientMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCarbohydrates(ctx)
 	case ingredient.FieldProtein:
 		return m.OldProtein(ctx)
+	case ingredient.FieldSource:
+		return m.OldSource(ctx)
 	}
 	return nil, fmt.Errorf("unknown Ingredient field %s", name)
 }
@@ -567,6 +624,13 @@ func (m *IngredientMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetProtein(v)
+		return nil
+	case ingredient.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Ingredient field %s", name)
@@ -648,7 +712,11 @@ func (m *IngredientMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *IngredientMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(ingredient.FieldSource) {
+		fields = append(fields, ingredient.FieldSource)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -661,6 +729,11 @@ func (m *IngredientMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *IngredientMutation) ClearField(name string) error {
+	switch name {
+	case ingredient.FieldSource:
+		m.ClearSource()
+		return nil
+	}
 	return fmt.Errorf("unknown Ingredient nullable field %s", name)
 }
 
@@ -682,6 +755,9 @@ func (m *IngredientMutation) ResetField(name string) error {
 		return nil
 	case ingredient.FieldProtein:
 		m.ResetProtein()
+		return nil
+	case ingredient.FieldSource:
+		m.ResetSource()
 		return nil
 	}
 	return fmt.Errorf("unknown Ingredient field %s", name)

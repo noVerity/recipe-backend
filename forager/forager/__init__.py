@@ -1,8 +1,15 @@
 from flask import Flask
+import asyncio
+from forager.mq.send import send
+from forager.mq.receive import receive
 __version__ = '0.1.0'
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
 
-@app.route("/")
-def BananaEchoer():
-    return "Banana2"
+    from forager.views import index
+    app.register_blueprint(index)
+
+    asyncio.run(receive())
+
+    return app

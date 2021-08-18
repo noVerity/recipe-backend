@@ -23,6 +23,7 @@ func (Ingredient) Fields() []ent.Field {
 		field.Float32("fat"),
 		field.Float32("carbohydrates"),
 		field.Float32("protein"),
+		field.String("source").Nillable().Optional(),
 	}
 }
 

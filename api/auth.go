@@ -71,7 +71,7 @@ func (manager *AuthManager) AuthMiddleware() gin.HandlerFunc {
 }
 
 func (manager *AuthManager) GetToken(username string) (string, error) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(time.Hour)
 
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &Claims{

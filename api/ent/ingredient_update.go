@@ -85,6 +85,26 @@ func (iu *IngredientUpdate) AddProtein(f float32) *IngredientUpdate {
 	return iu
 }
 
+// SetSource sets the "source" field.
+func (iu *IngredientUpdate) SetSource(s string) *IngredientUpdate {
+	iu.mutation.SetSource(s)
+	return iu
+}
+
+// SetNillableSource sets the "source" field if the given value is not nil.
+func (iu *IngredientUpdate) SetNillableSource(s *string) *IngredientUpdate {
+	if s != nil {
+		iu.SetSource(*s)
+	}
+	return iu
+}
+
+// ClearSource clears the value of the "source" field.
+func (iu *IngredientUpdate) ClearSource() *IngredientUpdate {
+	iu.mutation.ClearSource()
+	return iu
+}
+
 // AddRecipeIDs adds the "recipe" edge to the Recipe entity by IDs.
 func (iu *IngredientUpdate) AddRecipeIDs(ids ...int) *IngredientUpdate {
 	iu.mutation.AddRecipeIDs(ids...)
@@ -277,6 +297,19 @@ func (iu *IngredientUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: ingredient.FieldProtein,
 		})
 	}
+	if value, ok := iu.mutation.Source(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: ingredient.FieldSource,
+		})
+	}
+	if iu.mutation.SourceCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: ingredient.FieldSource,
+		})
+	}
 	if iu.mutation.RecipeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -405,6 +438,26 @@ func (iuo *IngredientUpdateOne) SetProtein(f float32) *IngredientUpdateOne {
 // AddProtein adds f to the "protein" field.
 func (iuo *IngredientUpdateOne) AddProtein(f float32) *IngredientUpdateOne {
 	iuo.mutation.AddProtein(f)
+	return iuo
+}
+
+// SetSource sets the "source" field.
+func (iuo *IngredientUpdateOne) SetSource(s string) *IngredientUpdateOne {
+	iuo.mutation.SetSource(s)
+	return iuo
+}
+
+// SetNillableSource sets the "source" field if the given value is not nil.
+func (iuo *IngredientUpdateOne) SetNillableSource(s *string) *IngredientUpdateOne {
+	if s != nil {
+		iuo.SetSource(*s)
+	}
+	return iuo
+}
+
+// ClearSource clears the value of the "source" field.
+func (iuo *IngredientUpdateOne) ClearSource() *IngredientUpdateOne {
+	iuo.mutation.ClearSource()
 	return iuo
 }
 
@@ -622,6 +675,19 @@ func (iuo *IngredientUpdateOne) sqlSave(ctx context.Context) (_node *Ingredient,
 			Type:   field.TypeFloat32,
 			Value:  value,
 			Column: ingredient.FieldProtein,
+		})
+	}
+	if value, ok := iuo.mutation.Source(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: ingredient.FieldSource,
+		})
+	}
+	if iuo.mutation.SourceCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: ingredient.FieldSource,
 		})
 	}
 	if iuo.mutation.RecipeCleared() {
