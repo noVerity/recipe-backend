@@ -1,4 +1,7 @@
 start:
+	APP_TOKEN="TEST" \
+	APP_OUT_QUEUE="ingredients_results" \
+	APP_IN_QUEUE="ingredients_lookup" \
 	poetry run gunicorn "forager:create_app()" --bind=0.0.0.0:8000
 
 develop:

@@ -6,7 +6,7 @@ from forager.fooddata.lookup import lookup
 
 receiving_queue = os.environ.get("APP_IN_QUEUE")
 
-async def receive():
+def receive():
     channel, connection = connect()    
 
     channel.queue_declare(queue=receiving_queue)
