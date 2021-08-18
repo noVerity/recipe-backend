@@ -1,1 +1,1 @@
-web: gunicorn forager:create_app()
+web: gunicorn "forager:create_app()"
