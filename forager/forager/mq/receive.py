@@ -22,7 +22,7 @@ def receive():
 def callback(ch, method, properties, body):
     try:
         message = json.loads(body)
-        print("receied message %s" % message)
+        print("received message %s" % message)
         ingredient_result = lookup(message.get("searchTerm"))
         ingredient_result.update({"recipeId": message.get("recipeId")})
         send(json.dumps(ingredient_result))
