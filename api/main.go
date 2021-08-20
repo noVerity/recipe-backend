@@ -39,11 +39,13 @@ func main() {
 	}
 
 	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
+	mq := NewMQ(getenv("CLOUDAMQP_URL", "amqp://guest:guest@localhost:5672/"))
+	defer mq.Close()
 
-	go AcceptIngredientResults(client)
+	go mq.AcceptIngredientResults(client)
 
 	// Set up the routes available in the API
-	r := SetupRouter(client, gin.Default(), manager, RequestIngredients)
+	r := SetupRouter(client, gin.Default(), manager, mq.RequestIngredients)
 	r.Run()
 }
 

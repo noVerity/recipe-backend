@@ -106,7 +106,7 @@ func (controller *RecipeController) HandleCreateRecipe(c *gin.Context) {
 		return
 	}
 
-	controller.requestIngredients(missingIngredients, createdRecipe.ID)
+	go controller.requestIngredients(missingIngredients, createdRecipe.ID)
 
 	c.JSON(http.StatusCreated, RecipeModelToResponse(createdRecipe))
 }
@@ -170,7 +170,7 @@ func (controller *RecipeController) HandleUpdateRecipe(c *gin.Context) {
 		return
 	}
 
-	controller.requestIngredients(missingIngredients, result.ID)
+	go controller.requestIngredients(missingIngredients, result.ID)
 
 	c.JSON(http.StatusOK, RecipeModelToResponse(result))
 }

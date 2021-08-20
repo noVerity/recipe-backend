@@ -4,10 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"math"
+	"sync"
+	"time"
 
 	"adomeit.xyz/recipe/ent"
 	"github.com/streadway/amqp"
 )
+
+type MQ struct {
+	mu         sync.Mutex
+	connection *amqp.Connection
+	channel    *amqp.Channel
+	location   string
+	delay      time.Duration
+
+	LookupQueue *amqp.Queue
+	ResultQueue *amqp.Queue
+}
 
 type IngredientMQRequest struct {
 	RecipeID   int    `json:"recipeId"`
@@ -24,16 +38,82 @@ type IngredientMQResult struct {
 	Carbohydrates float32 `json:"carbohydrates"`
 }
 
-func RequestIngredients(entries []IngredientEntry, recipeID int) {
-	conn, err := amqp.Dial(getenv("CLOUDAMQP_URL", "amqp://guest:guest@localhost:5672/"))
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
+func NewMQ(connectionString string) *MQ {
+	mq := &MQ{sync.Mutex{}, nil, nil, connectionString, 0, nil, nil}
 
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
+	return mq
+}
 
-	q, err := ch.QueueDeclare(
+func (mq *MQ) Connect() error {
+	mq.mu.Lock()
+	if mq.connection == nil || mq.connection.IsClosed() {
+		conn, err := amqp.Dial(mq.location)
+
+		if err != nil {
+			// Try to connect again, but don't DDOS our own service
+			go mq.reconnect()
+			// Call lock here again to wait for the reconnect to unlock eventually
+			mq.mu.Lock()
+		} else {
+			log.Print("Connected to message queue")
+			mq.connection = conn
+		}
+	}
+	defer mq.mu.Unlock()
+
+	if mq.channel == nil {
+		ch, err := mq.connection.Channel()
+
+		if err != nil {
+			return err
+		}
+
+		mq.channel = ch
+
+		mq.channelDeclare()
+	}
+
+	return nil
+}
+
+func (mq *MQ) reconnect() {
+	// Try to connect again, but don't DDOS our own service
+	// We are starting with 10 seconds and the gradually back off to a 30 minute interval
+	if mq.delay == 0 {
+		mq.delay = time.Second * 10
+	} else {
+		mq.delay = time.Duration(int64(math.Min(float64(mq.delay*2), float64(time.Minute*30))))
+	}
+	log.Printf("Failed to connect to message queue trying again in %v", mq.delay)
+	time.Sleep(mq.delay)
+	conn, err := amqp.Dial(mq.location)
+	if err != nil {
+		go mq.reconnect()
+		return
+	}
+	mq.connection = conn
+	mq.delay = 0
+	log.Print("Connected to message queue")
+	mq.mu.Unlock()
+}
+
+func (mq *MQ) Close() {
+	mq.mu.Lock()
+	defer mq.mu.Unlock()
+	if mq.channel != nil {
+		mq.channel.Close()
+	}
+
+	if mq.connection != nil && !mq.connection.IsClosed() {
+		mq.connection.Close()
+	}
+}
+
+func (mq *MQ) channelDeclare() error {
+
+	mq.mu.Lock()
+	defer mq.mu.Unlock()
+	lookupQueue, err := mq.channel.QueueDeclare(
 		getenv("APP_OUT_QUEUE", "ingredients_lookup"), // name
 		false, // durable
 		false, // delete when unused
@@ -41,7 +121,33 @@ func RequestIngredients(entries []IngredientEntry, recipeID int) {
 		false, // no-wait
 		nil,   // arguments
 	)
-	failOnError(err, "Failed to declare a queue")
+
+	if err != nil {
+		return err
+	}
+
+	mq.LookupQueue = &lookupQueue
+
+	resultQueue, err := mq.channel.QueueDeclare(
+		getenv("APP_OUT_QUEUE", "ingredients_lookup"), // name
+		false, // durable
+		false, // delete when unused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+
+	if err != nil {
+		return err
+	}
+
+	mq.ResultQueue = &resultQueue
+
+	return nil
+}
+
+func (mq *MQ) RequestIngredients(entries []IngredientEntry, recipeID int) {
+	mq.Connect()
 
 	for _, entry := range entries {
 		request := IngredientMQRequest{
@@ -52,11 +158,11 @@ func RequestIngredients(entries []IngredientEntry, recipeID int) {
 		message, err := json.Marshal(request)
 		failOnError(err, "Failed to marshal a message")
 
-		err = ch.Publish(
-			"",     // exchange
-			q.Name, // routing key
-			false,  // mandatory
-			false,  // immediate
+		err = mq.channel.Publish(
+			"",                  // exchange
+			mq.LookupQueue.Name, // routing key
+			false,               // mandatory
+			false,               // immediate
 			amqp.Publishing{
 				ContentType: "application/json",
 				Body:        []byte(message),
@@ -65,33 +171,18 @@ func RequestIngredients(entries []IngredientEntry, recipeID int) {
 	}
 }
 
-func AcceptIngredientResults(client *ent.Client) {
-	conn, err := amqp.Dial(getenv("CLOUDAMQP_URL", "amqp://guest:guest@localhost:5672/"))
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
+func (mq *MQ) AcceptIngredientResults(client *ent.Client) {
 
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
+	mq.Connect()
 
-	q, err := ch.QueueDeclare(
-		getenv("APP_IN_QUEUE", "ingredients_results"), // name
-		false, // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
-	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+	msgs, err := mq.channel.Consume(
+		mq.ResultQueue.Name, // queue
+		"",                  // consumer
+		true,                // auto-ack
+		false,               // exclusive
+		false,               // no-local
+		false,               // no-wait
+		nil,                 // args
 	)
 	failOnError(err, "Failed to register a consumer")
 
