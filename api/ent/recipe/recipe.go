@@ -17,6 +17,8 @@ const (
 	FieldInstructions = "instructions"
 	// FieldNutrition holds the string denoting the nutrition field in the database.
 	FieldNutrition = "nutrition"
+	// FieldUser holds the string denoting the user field in the database.
+	FieldUser = "user"
 	// FieldServings holds the string denoting the servings field in the database.
 	FieldServings = "servings"
 	// EdgeIngredients holds the string denoting the ingredients edge name in mutations.
@@ -38,6 +40,7 @@ var Columns = []string{
 	FieldIngredientslist,
 	FieldInstructions,
 	FieldNutrition,
+	FieldUser,
 	FieldServings,
 }
 
@@ -64,4 +67,6 @@ var (
 	NameValidator func(string) error
 	// ServingsValidator is a validator for the "servings" field. It is called by the builders before save.
 	ServingsValidator func(int) error
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() string
 )

@@ -18,6 +18,7 @@ func TestSetupUserRoutes(t *testing.T) {
 	w := requestTester(
 		http.MethodPost,
 		userRoute,
+		false,
 		`{
 			"user""Frodo",
 			"email":"frodo@shire.me",
@@ -31,6 +32,7 @@ func TestSetupUserRoutes(t *testing.T) {
 	w = requestTester(
 		http.MethodPost,
 		userRoute,
+		false,
 		`{
 			"username":"Frodo",
 			"email":"frodo@shire.me",
@@ -40,10 +42,21 @@ func TestSetupUserRoutes(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
+	// Valid user getting user data
+	w = requestTester(
+		http.MethodGet,
+		userRoute,
+		true,
+		``,
+	)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
 	// Same user trying to register again
 	w = requestTester(
 		http.MethodPost,
 		userRoute,
+		false,
 		`{
 			"username":"Frodo",
 			"email":"frodo@shire.me",
@@ -58,6 +71,7 @@ func TestSetupUserRoutes(t *testing.T) {
 	w = requestTester(
 		http.MethodPost,
 		loginRoute,
+		false,
 		`{
 			"username":"Frodo",
 			"password":"myprecious"
@@ -70,6 +84,7 @@ func TestSetupUserRoutes(t *testing.T) {
 	w = requestTester(
 		http.MethodPost,
 		loginRoute,
+		false,
 		`{
 			"username":"Frodo",
 			"password":"sam4ever"
@@ -83,6 +98,7 @@ func TestSetupUserRoutes(t *testing.T) {
 	w = requestTester(
 		http.MethodPost,
 		loginRoute,
+		false,
 		`{
 			"user""Frodo",
 			"password":"myprecious"

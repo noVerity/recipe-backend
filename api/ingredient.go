@@ -52,10 +52,10 @@ func NewIngredientController(r *gin.Engine, client *ent.Client, auth *AuthManage
 	{
 		userRoute.POST("", controller.HandleCreateIngredient)
 		userRoute.GET("", controller.HandleGetAllIngredients)
-		userRoute.PUT("/:name", controller.HandleUpdateIngredient)
-		userRoute.PATCH("/:name", controller.HandleUpdateIngredient)
-		userRoute.GET("/:name", controller.HandleGetIngredient)
-		userRoute.DELETE("/:name", controller.HandleDeleteIngredient)
+		userRoute.PUT("/:id", controller.HandleUpdateIngredient)
+		userRoute.PATCH("/:id", controller.HandleUpdateIngredient)
+		userRoute.GET("/:id", controller.HandleGetIngredient)
+		userRoute.DELETE("/:id", controller.HandleDeleteIngredient)
 	}
 	return &controller
 }
@@ -108,7 +108,7 @@ func (controller *IngredientController) HandleUpdateIngredient(c *gin.Context) {
 	}
 
 	previous, err := controller.client.Ingredient.Query().
-		Where(ingredient.NameEqualFold(uriElement.Name)).
+		Where(ingredient.NameEqualFold(uriElement.Id)).
 		First(c)
 
 	if err != nil {
@@ -141,7 +141,7 @@ func (controller *IngredientController) HandleGetIngredient(c *gin.Context) {
 	}
 
 	result, err := controller.client.Ingredient.Query().
-		Where(ingredient.NameEqualFold(uriElement.Name)).
+		Where(ingredient.NameEqualFold(uriElement.Id)).
 		First(c)
 
 	if err != nil {
@@ -217,7 +217,7 @@ func (controller *IngredientController) HandleDeleteIngredient(c *gin.Context) {
 	}
 
 	result, err := controller.client.Ingredient.Query().
-		Where(ingredient.NameEqualFold(uriElement.Name)).
+		Where(ingredient.NameEqualFold(uriElement.Id)).
 		First(c)
 
 	if err != nil {

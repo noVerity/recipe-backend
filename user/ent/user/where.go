@@ -3,7 +3,7 @@
 package user
 
 import (
-	"adomeit.xyz/recipe/ent/predicate"
+	"adomeit.xyz/user/ent/predicate"
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -101,6 +101,13 @@ func Username(v string) predicate.User {
 func Email(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldEmail), v))
+	})
+}
+
+// RecipeShard applies equality check predicate on the "recipeShard" field. It's identical to RecipeShardEQ.
+func RecipeShard(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldRecipeShard), v))
 	})
 }
 
@@ -330,6 +337,117 @@ func EmailEqualFold(v string) predicate.User {
 func EmailContainsFold(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldEmail), v))
+	})
+}
+
+// RecipeShardEQ applies the EQ predicate on the "recipeShard" field.
+func RecipeShardEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardNEQ applies the NEQ predicate on the "recipeShard" field.
+func RecipeShardNEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardIn applies the In predicate on the "recipeShard" field.
+func RecipeShardIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldRecipeShard), v...))
+	})
+}
+
+// RecipeShardNotIn applies the NotIn predicate on the "recipeShard" field.
+func RecipeShardNotIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldRecipeShard), v...))
+	})
+}
+
+// RecipeShardGT applies the GT predicate on the "recipeShard" field.
+func RecipeShardGT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardGTE applies the GTE predicate on the "recipeShard" field.
+func RecipeShardGTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardLT applies the LT predicate on the "recipeShard" field.
+func RecipeShardLT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardLTE applies the LTE predicate on the "recipeShard" field.
+func RecipeShardLTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardContains applies the Contains predicate on the "recipeShard" field.
+func RecipeShardContains(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardHasPrefix applies the HasPrefix predicate on the "recipeShard" field.
+func RecipeShardHasPrefix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardHasSuffix applies the HasSuffix predicate on the "recipeShard" field.
+func RecipeShardHasSuffix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardEqualFold applies the EqualFold predicate on the "recipeShard" field.
+func RecipeShardEqualFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldRecipeShard), v))
+	})
+}
+
+// RecipeShardContainsFold applies the ContainsFold predicate on the "recipeShard" field.
+func RecipeShardContainsFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldRecipeShard), v))
 	})
 }
 

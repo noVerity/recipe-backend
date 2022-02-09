@@ -1,9 +1,9 @@
 package main
 
 import (
-	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/noVerity/gofromto"
 )
 
 type IngredientEntry struct {
@@ -16,19 +16,17 @@ type IngredientEntry struct {
 func ParseIngredientList(ingredientList string) []IngredientEntry {
 	ingredients := strings.Split(ingredientList, "\n")
 	var entryList []IngredientEntry
-	ingredientMatcher, _ := regexp.Compile(`^(\d+(?:\.\d+)?)\s+(\w+)\s+(.+)$`)
 	for _, line := range ingredients {
-		matched := ingredientMatcher.FindStringSubmatch(strings.TrimSpace(line))
-		amount, err := strconv.ParseFloat(matched[1], 32)
+		measure, err := gofromto.ParseMeasure(line)
 
-		if err != nil || len(matched) < 4 {
+		if err != nil {
 			continue
 		}
 
 		entryList = append(entryList, IngredientEntry{
-			Name:    matched[3],
-			Amount:  float32(amount),
-			Measure: matched[2],
+			Name:    measure.Name,
+			Amount:  float32(measure.Amount),
+			Measure: measure.Unit.String(),
 		})
 	}
 	return entryList

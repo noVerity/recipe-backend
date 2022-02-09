@@ -18,13 +18,15 @@ type MQ struct {
 	channel    *amqp.Channel
 	location   string
 	delay      time.Duration
+	shard      string
 
 	LookupQueue *amqp.Queue
 	ResultQueue *amqp.Queue
 }
 
 type IngredientMQRequest struct {
-	RecipeID   int    `json:"recipeId"`
+	RecipeID   string `json:"recipeId"`
+	Shard      string `json:"shard"`
 	SearchTerm string `json:"searchTerm"`
 }
 
@@ -38,8 +40,8 @@ type IngredientMQResult struct {
 	Carbohydrates float32 `json:"carbohydrates"`
 }
 
-func NewMQ(connectionString string) *MQ {
-	mq := &MQ{sync.Mutex{}, nil, nil, connectionString, 0, nil, nil}
+func NewMQ(connectionString string, shard string) *MQ {
+	mq := &MQ{sync.Mutex{}, nil, nil, connectionString, 0, shard, nil, nil}
 
 	return mq
 }
@@ -129,7 +131,7 @@ func (mq *MQ) channelDeclare() error {
 	mq.LookupQueue = &lookupQueue
 
 	resultQueue, err := mq.channel.QueueDeclare(
-		getenv("APP_OUT_QUEUE", "ingredients_lookup"), // name
+		getenv("APP_IN_QUEUE", "ingredients_lookup_in")+mq.shard, // name
 		false, // durable
 		false, // delete when unused
 		false, // exclusive
@@ -146,13 +148,14 @@ func (mq *MQ) channelDeclare() error {
 	return nil
 }
 
-func (mq *MQ) RequestIngredients(entries []IngredientEntry, recipeID int) {
+func (mq *MQ) RequestIngredients(entries []IngredientEntry, recipeID string) {
 	mq.Connect()
 
 	for _, entry := range entries {
 		request := IngredientMQRequest{
 			RecipeID:   recipeID,
 			SearchTerm: entry.Name,
+			Shard:      mq.shard,
 		}
 
 		message, err := json.Marshal(request)

@@ -6,7 +6,6 @@ import (
 	"adomeit.xyz/recipe/ent/ingredient"
 	"adomeit.xyz/recipe/ent/recipe"
 	"adomeit.xyz/recipe/ent/schema"
-	"adomeit.xyz/recipe/ent/user"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -30,35 +29,11 @@ func init() {
 	// recipe.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	recipe.NameValidator = recipeDescName.Validators[0].(func(string) error)
 	// recipeDescServings is the schema descriptor for servings field.
-	recipeDescServings := recipeFields[6].Descriptor()
+	recipeDescServings := recipeFields[7].Descriptor()
 	// recipe.ServingsValidator is a validator for the "servings" field. It is called by the builders before save.
 	recipe.ServingsValidator = recipeDescServings.Validators[0].(func(int) error)
-	userFields := schema.User{}.Fields()
-	_ = userFields
-	// userDescUsername is the schema descriptor for username field.
-	userDescUsername := userFields[1].Descriptor()
-	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
-	user.UsernameValidator = userDescUsername.Validators[0].(func(string) error)
-	// userDescEmail is the schema descriptor for email field.
-	userDescEmail := userFields[2].Descriptor()
-	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	user.EmailValidator = func() func(string) error {
-		validators := userDescEmail.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(email string) error {
-			for _, fn := range fns {
-				if err := fn(email); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// userDescPassword is the schema descriptor for password field.
-	userDescPassword := userFields[3].Descriptor()
-	// user.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
-	user.PasswordValidator = userDescPassword.Validators[0].(func(string) error)
+	// recipeDescID is the schema descriptor for id field.
+	recipeDescID := recipeFields[0].Descriptor()
+	// recipe.DefaultID holds the default value on creation for the id field.
+	recipe.DefaultID = recipeDescID.Default.(func() string)
 }

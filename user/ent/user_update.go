@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"adomeit.xyz/recipe/ent/predicate"
-	"adomeit.xyz/recipe/ent/user"
+	"adomeit.xyz/user/ent/predicate"
+	"adomeit.xyz/user/ent/user"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -35,6 +35,12 @@ func (uu *UserUpdate) SetUsername(s string) *UserUpdate {
 // SetEmail sets the "email" field.
 func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
 	uu.mutation.SetEmail(s)
+	return uu
+}
+
+// SetRecipeShard sets the "recipeShard" field.
+func (uu *UserUpdate) SetRecipeShard(s string) *UserUpdate {
+	uu.mutation.SetRecipeShard(s)
 	return uu
 }
 
@@ -161,6 +167,13 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldEmail,
 		})
 	}
+	if value, ok := uu.mutation.RecipeShard(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldRecipeShard,
+		})
+	}
 	if value, ok := uu.mutation.Password(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -196,6 +209,12 @@ func (uuo *UserUpdateOne) SetUsername(s string) *UserUpdateOne {
 // SetEmail sets the "email" field.
 func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
 	uuo.mutation.SetEmail(s)
+	return uuo
+}
+
+// SetRecipeShard sets the "recipeShard" field.
+func (uuo *UserUpdateOne) SetRecipeShard(s string) *UserUpdateOne {
+	uuo.mutation.SetRecipeShard(s)
 	return uuo
 }
 
@@ -344,6 +363,13 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Type:   field.TypeString,
 			Value:  value,
 			Column: user.FieldEmail,
+		})
+	}
+	if value, ok := uuo.mutation.RecipeShard(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldRecipeShard,
 		})
 	}
 	if value, ok := uuo.mutation.Password(); ok {

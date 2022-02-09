@@ -40,8 +40,57 @@ resource "random_password" "forager_token" {
   override_special = "_%@"
 }
 
-resource "heroku_app" "api" {
-  name   = "${local.recipe_app_name}-api"
+resource "heroku_app" "gateway" {
+  name   = "${local.recipe_app_name}-gateway"
+  region = var.heroku_region
+
+    config_vars = {
+    GIN_MODE        = "release",
+    APP_USER_SERVICE = user.web_url,
+    APP_RECIPE_SHARDS = jsonencode({
+      "shards" = [
+        {
+          "name": "one",
+          "url": recipe_one.web_url
+        },
+        {
+          "name": "two",
+          "url": recipe_two.web_url
+        }
+      ]
+    }),
+  }
+  sensitive_config_vars = {
+    JWT_SECRET = random_password.password.result
+  }
+}
+
+resource "heroku_app" "user" {
+  name   = "${local.recipe_app_name}-user"
+  region = var.heroku_region
+
+    config_vars = {
+    GIN_MODE        = "release",
+    APP_RECIPE_SHARDS = jsonencode({
+      "shards" = [
+        {
+          "name": "one",
+          "url": recipe_one.web_url
+        },
+        {
+          "name": "two",
+          "url": recipe_two.web_url
+        }
+      ]
+    }),
+  }
+  sensitive_config_vars = {
+    JWT_SECRET = random_password.password.result
+  }
+}
+
+resource "heroku_app" "recipe_one" {
+  name   = "${local.recipe_app_name}-recipe-one"
   region = var.heroku_region
 
   config_vars = {
@@ -54,18 +103,60 @@ resource "heroku_app" "api" {
   }
 }
 
-resource "heroku_addon" "database" {
-  app  = heroku_app.api.name
+resource "heroku_app" "recipe_two" {
+  name   = "${local.recipe_app_name}-recipe-two"
+  region = var.heroku_region
+
+  config_vars = {
+    GIN_MODE        = "release",
+    "APP_IN_QUEUE"  = "ingredients_results",
+    "APP_OUT_QUEUE" = "ingredients_lookup"
+  }
+  sensitive_config_vars = {
+    JWT_SECRET = random_password.password.result
+  }
+}
+
+resource "heroku_addon" "user_db" {
+  app  = heroku_app.user.name
+  plan = "heroku-postgresql:hobby-dev"
+}
+
+resource "heroku_addon" "recipe_one_db" {
+  app  = heroku_app.recipe_one.name
+  plan = "heroku-postgresql:hobby-dev"
+}
+
+resource "heroku_addon" "recipe_two_db" {
+  app  = heroku_app.recipe_two.name
   plan = "heroku-postgresql:hobby-dev"
 }
 
 resource "heroku_addon" "mq" {
-  app  = heroku_app.api.name
+  app  = heroku_app.recipe_one.name
   plan = "cloudamqp:lemur"
 }
 
-resource "heroku_build" "api" {
-  app        = heroku_app.api.id
+resource "heroku_build" "gateway" {
+  app        = heroku_app.gateway.id
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-go.git"]
+
+  source {
+    path = "gateway"
+  }
+}
+
+resource "heroku_build" "user" {
+  app        = heroku_app.user.id
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-go.git"]
+
+  source {
+    path = "user"
+  }
+}
+
+resource "heroku_build" "recipe_one" {
+  app        = heroku_app.recipe_one.id
   buildpacks = ["https://github.com/heroku/heroku-buildpack-go.git"]
 
   source {
@@ -73,12 +164,41 @@ resource "heroku_build" "api" {
   }
 }
 
-resource "heroku_formation" "api" {
-  app        = heroku_app.api.id
+resource "heroku_formation" "gateway" {
+  app        = heroku_app.gateway.id
   type       = "web"
   quantity   = 1
   size       = "free"
-  depends_on = [heroku_build.api]
+  depends_on = [heroku_build.gateway]
+}
+
+resource "heroku_formation" "user" {
+  app        = heroku_app.user.id
+  type       = "web"
+  quantity   = 1
+  size       = "free"
+  depends_on = [heroku_build.user]
+}
+
+resource "heroku_formation" "recipe_one" {
+  app        = heroku_app.recipe_one.id
+  type       = "web"
+  quantity   = 1
+  size       = "free"
+  depends_on = [heroku_build.recipe_one]
+}
+
+resource "heroku_formation" "recipe_two" {
+  app        = heroku_app.recipe_two.id
+  type       = "web"
+  quantity   = 1
+  size       = "free"
+  depends_on = [heroku_build.recipe_one]
+}
+
+resource "heroku_addon_attachment" "mq_recipe_two" {
+  app_id   = heroku_app.recipe_two.id
+  addon_id = heroku_addon.mq.id
 }
 
 resource "heroku_app" "forager" {

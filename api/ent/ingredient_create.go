@@ -71,14 +71,14 @@ func (ic *IngredientCreate) SetID(i int) *IngredientCreate {
 }
 
 // AddRecipeIDs adds the "recipe" edge to the Recipe entity by IDs.
-func (ic *IngredientCreate) AddRecipeIDs(ids ...int) *IngredientCreate {
+func (ic *IngredientCreate) AddRecipeIDs(ids ...string) *IngredientCreate {
 	ic.mutation.AddRecipeIDs(ids...)
 	return ic
 }
 
 // AddRecipe adds the "recipe" edges to the Recipe entity.
 func (ic *IngredientCreate) AddRecipe(r ...*Recipe) *IngredientCreate {
-	ids := make([]int, len(r))
+	ids := make([]string, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -156,24 +156,24 @@ func (ic *IngredientCreate) ExecX(ctx context.Context) {
 // check runs all checks and user-defined validators on the builder.
 func (ic *IngredientCreate) check() error {
 	if _, ok := ic.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "name"`)}
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Ingredient.name"`)}
 	}
 	if v, ok := ic.mutation.Name(); ok {
 		if err := ingredient.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "name": %w`, err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Ingredient.name": %w`, err)}
 		}
 	}
 	if _, ok := ic.mutation.Calories(); !ok {
-		return &ValidationError{Name: "calories", err: errors.New(`ent: missing required field "calories"`)}
+		return &ValidationError{Name: "calories", err: errors.New(`ent: missing required field "Ingredient.calories"`)}
 	}
 	if _, ok := ic.mutation.Fat(); !ok {
-		return &ValidationError{Name: "fat", err: errors.New(`ent: missing required field "fat"`)}
+		return &ValidationError{Name: "fat", err: errors.New(`ent: missing required field "Ingredient.fat"`)}
 	}
 	if _, ok := ic.mutation.Carbohydrates(); !ok {
-		return &ValidationError{Name: "carbohydrates", err: errors.New(`ent: missing required field "carbohydrates"`)}
+		return &ValidationError{Name: "carbohydrates", err: errors.New(`ent: missing required field "Ingredient.carbohydrates"`)}
 	}
 	if _, ok := ic.mutation.Protein(); !ok {
-		return &ValidationError{Name: "protein", err: errors.New(`ent: missing required field "protein"`)}
+		return &ValidationError{Name: "protein", err: errors.New(`ent: missing required field "Ingredient.protein"`)}
 	}
 	return nil
 }
@@ -186,7 +186,7 @@ func (ic *IngredientCreate) sqlSave(ctx context.Context) (*Ingredient, error) {
 		}
 		return nil, err
 	}
-	if _node.ID == 0 {
+	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
 		_node.ID = int(id)
 	}
@@ -265,7 +265,7 @@ func (ic *IngredientCreate) createSpec() (*Ingredient, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: recipe.FieldID,
 				},
 			},

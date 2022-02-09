@@ -18,14 +18,14 @@ func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint strin
 
 	gin.SetMode(gin.ReleaseMode)
 	auth := NewAuthManager("TEST_SECRET")
-	router := SetupRouter(client, gin.New(), auth, func(ingredients []IngredientEntry, recipeId int) {})
+	router := SetupRouter(client, gin.New(), auth, func(ingredients []IngredientEntry, recipeId string) {})
 	requestTester := GetJSONRequestTester(router, auth)
 
 	return client, requestTester
 }
 
 func GetJSONRequestTester(router *gin.Engine, auth *AuthManager) func(method string, endpoint string, payload string) *httptest.ResponseRecorder {
-	testToken, _ := auth.GetToken("TestUser")
+	testToken, _ := auth.GetToken("TestUser", "one")
 
 	return func(method string, endpoint string, payload string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()

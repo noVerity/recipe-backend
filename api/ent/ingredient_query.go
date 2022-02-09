@@ -383,8 +383,8 @@ func (iq *IngredientQuery) sqlAll(ctx context.Context) ([]*Ingredient, error) {
 			node.Edges.Recipe = []*Recipe{}
 		}
 		var (
-			edgeids []int
-			edges   = make(map[int][]*Ingredient)
+			edgeids []string
+			edges   = make(map[string][]*Ingredient)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -396,19 +396,19 @@ func (iq *IngredientQuery) sqlAll(ctx context.Context) ([]*Ingredient, error) {
 				s.Where(sql.InValues(ingredient.RecipePrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullString)}
 			},
 			Assign: func(out, in interface{}) error {
 				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullInt64)
+				ein, ok := in.(*sql.NullString)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				inValue := ein.String
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -444,6 +444,10 @@ func (iq *IngredientQuery) sqlAll(ctx context.Context) ([]*Ingredient, error) {
 
 func (iq *IngredientQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := iq.querySpec()
+	_spec.Node.Columns = iq.fields
+	if len(iq.fields) > 0 {
+		_spec.Unique = iq.unique != nil && *iq.unique
+	}
 	return sqlgraph.CountNodes(ctx, iq.driver, _spec)
 }
 
@@ -514,6 +518,9 @@ func (iq *IngredientQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if iq.sql != nil {
 		selector = iq.sql
 		selector.Select(selector.Columns(columns...)...)
+	}
+	if iq.unique != nil && *iq.unique {
+		selector.Distinct()
 	}
 	for _, p := range iq.predicates {
 		p(selector)
@@ -793,9 +800,7 @@ func (igb *IngredientGroupBy) sqlQuery() *sql.Selector {
 		for _, f := range igb.fields {
 			columns = append(columns, selector.C(f))
 		}
-		for _, c := range aggregation {
-			columns = append(columns, c)
-		}
+		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
 	return selector.GroupBy(selector.Columns(igb.fields...)...)

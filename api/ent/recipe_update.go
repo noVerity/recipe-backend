@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"adomeit.xyz/recipe/ent/ingredient"
@@ -54,6 +55,12 @@ func (ru *RecipeUpdate) SetInstructions(s string) *RecipeUpdate {
 // SetNutrition sets the "nutrition" field.
 func (ru *RecipeUpdate) SetNutrition(s string) *RecipeUpdate {
 	ru.mutation.SetNutrition(s)
+	return ru
+}
+
+// SetUser sets the "user" field.
+func (ru *RecipeUpdate) SetUser(s string) *RecipeUpdate {
+	ru.mutation.SetUser(s)
 	return ru
 }
 
@@ -175,17 +182,17 @@ func (ru *RecipeUpdate) ExecX(ctx context.Context) {
 func (ru *RecipeUpdate) check() error {
 	if v, ok := ru.mutation.Slug(); ok {
 		if err := recipe.SlugValidator(v); err != nil {
-			return &ValidationError{Name: "slug", err: fmt.Errorf("ent: validator failed for field \"slug\": %w", err)}
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Recipe.slug": %w`, err)}
 		}
 	}
 	if v, ok := ru.mutation.Name(); ok {
 		if err := recipe.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Recipe.name": %w`, err)}
 		}
 	}
 	if v, ok := ru.mutation.Servings(); ok {
 		if err := recipe.ServingsValidator(v); err != nil {
-			return &ValidationError{Name: "servings", err: fmt.Errorf("ent: validator failed for field \"servings\": %w", err)}
+			return &ValidationError{Name: "servings", err: fmt.Errorf(`ent: validator failed for field "Recipe.servings": %w`, err)}
 		}
 	}
 	return nil
@@ -197,7 +204,7 @@ func (ru *RecipeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   recipe.Table,
 			Columns: recipe.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: recipe.FieldID,
 			},
 		},
@@ -242,6 +249,13 @@ func (ru *RecipeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  value,
 			Column: recipe.FieldNutrition,
+		})
+	}
+	if value, ok := ru.mutation.User(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: recipe.FieldUser,
 		})
 	}
 	if value, ok := ru.mutation.Servings(); ok {
@@ -358,6 +372,12 @@ func (ruo *RecipeUpdateOne) SetInstructions(s string) *RecipeUpdateOne {
 // SetNutrition sets the "nutrition" field.
 func (ruo *RecipeUpdateOne) SetNutrition(s string) *RecipeUpdateOne {
 	ruo.mutation.SetNutrition(s)
+	return ruo
+}
+
+// SetUser sets the "user" field.
+func (ruo *RecipeUpdateOne) SetUser(s string) *RecipeUpdateOne {
+	ruo.mutation.SetUser(s)
 	return ruo
 }
 
@@ -486,17 +506,17 @@ func (ruo *RecipeUpdateOne) ExecX(ctx context.Context) {
 func (ruo *RecipeUpdateOne) check() error {
 	if v, ok := ruo.mutation.Slug(); ok {
 		if err := recipe.SlugValidator(v); err != nil {
-			return &ValidationError{Name: "slug", err: fmt.Errorf("ent: validator failed for field \"slug\": %w", err)}
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Recipe.slug": %w`, err)}
 		}
 	}
 	if v, ok := ruo.mutation.Name(); ok {
 		if err := recipe.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Recipe.name": %w`, err)}
 		}
 	}
 	if v, ok := ruo.mutation.Servings(); ok {
 		if err := recipe.ServingsValidator(v); err != nil {
-			return &ValidationError{Name: "servings", err: fmt.Errorf("ent: validator failed for field \"servings\": %w", err)}
+			return &ValidationError{Name: "servings", err: fmt.Errorf(`ent: validator failed for field "Recipe.servings": %w`, err)}
 		}
 	}
 	return nil
@@ -508,14 +528,14 @@ func (ruo *RecipeUpdateOne) sqlSave(ctx context.Context) (_node *Recipe, err err
 			Table:   recipe.Table,
 			Columns: recipe.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: recipe.FieldID,
 			},
 		},
 	}
 	id, ok := ruo.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "ID", err: fmt.Errorf("missing Recipe.ID for update")}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Recipe.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := ruo.fields; len(fields) > 0 {
@@ -570,6 +590,13 @@ func (ruo *RecipeUpdateOne) sqlSave(ctx context.Context) (_node *Recipe, err err
 			Type:   field.TypeString,
 			Value:  value,
 			Column: recipe.FieldNutrition,
+		})
+	}
+	if value, ok := ruo.mutation.User(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: recipe.FieldUser,
 		})
 	}
 	if value, ok := ruo.mutation.Servings(); ok {

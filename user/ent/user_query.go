@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"math"
 
-	"adomeit.xyz/recipe/ent/predicate"
-	"adomeit.xyz/recipe/ent/user"
+	"adomeit.xyz/user/ent/predicate"
+	"adomeit.xyz/user/ent/user"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"

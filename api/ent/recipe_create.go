@@ -50,6 +50,12 @@ func (rc *RecipeCreate) SetNutrition(s string) *RecipeCreate {
 	return rc
 }
 
+// SetUser sets the "user" field.
+func (rc *RecipeCreate) SetUser(s string) *RecipeCreate {
+	rc.mutation.SetUser(s)
+	return rc
+}
+
 // SetServings sets the "servings" field.
 func (rc *RecipeCreate) SetServings(i int) *RecipeCreate {
 	rc.mutation.SetServings(i)
@@ -57,8 +63,16 @@ func (rc *RecipeCreate) SetServings(i int) *RecipeCreate {
 }
 
 // SetID sets the "id" field.
-func (rc *RecipeCreate) SetID(i int) *RecipeCreate {
-	rc.mutation.SetID(i)
+func (rc *RecipeCreate) SetID(s string) *RecipeCreate {
+	rc.mutation.SetID(s)
+	return rc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (rc *RecipeCreate) SetNillableID(s *string) *RecipeCreate {
+	if s != nil {
+		rc.SetID(*s)
+	}
 	return rc
 }
 
@@ -88,6 +102,7 @@ func (rc *RecipeCreate) Save(ctx context.Context) (*Recipe, error) {
 		err  error
 		node *Recipe
 	)
+	rc.defaults()
 	if len(rc.hooks) == 0 {
 		if err = rc.check(); err != nil {
 			return nil, err
@@ -145,39 +160,50 @@ func (rc *RecipeCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (rc *RecipeCreate) defaults() {
+	if _, ok := rc.mutation.ID(); !ok {
+		v := recipe.DefaultID()
+		rc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (rc *RecipeCreate) check() error {
 	if _, ok := rc.mutation.Slug(); !ok {
-		return &ValidationError{Name: "slug", err: errors.New(`ent: missing required field "slug"`)}
+		return &ValidationError{Name: "slug", err: errors.New(`ent: missing required field "Recipe.slug"`)}
 	}
 	if v, ok := rc.mutation.Slug(); ok {
 		if err := recipe.SlugValidator(v); err != nil {
-			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "slug": %w`, err)}
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Recipe.slug": %w`, err)}
 		}
 	}
 	if _, ok := rc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "name"`)}
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Recipe.name"`)}
 	}
 	if v, ok := rc.mutation.Name(); ok {
 		if err := recipe.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "name": %w`, err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Recipe.name": %w`, err)}
 		}
 	}
 	if _, ok := rc.mutation.Ingredientslist(); !ok {
-		return &ValidationError{Name: "ingredientslist", err: errors.New(`ent: missing required field "ingredientslist"`)}
+		return &ValidationError{Name: "ingredientslist", err: errors.New(`ent: missing required field "Recipe.ingredientslist"`)}
 	}
 	if _, ok := rc.mutation.Instructions(); !ok {
-		return &ValidationError{Name: "instructions", err: errors.New(`ent: missing required field "instructions"`)}
+		return &ValidationError{Name: "instructions", err: errors.New(`ent: missing required field "Recipe.instructions"`)}
 	}
 	if _, ok := rc.mutation.Nutrition(); !ok {
-		return &ValidationError{Name: "nutrition", err: errors.New(`ent: missing required field "nutrition"`)}
+		return &ValidationError{Name: "nutrition", err: errors.New(`ent: missing required field "Recipe.nutrition"`)}
+	}
+	if _, ok := rc.mutation.User(); !ok {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required field "Recipe.user"`)}
 	}
 	if _, ok := rc.mutation.Servings(); !ok {
-		return &ValidationError{Name: "servings", err: errors.New(`ent: missing required field "servings"`)}
+		return &ValidationError{Name: "servings", err: errors.New(`ent: missing required field "Recipe.servings"`)}
 	}
 	if v, ok := rc.mutation.Servings(); ok {
 		if err := recipe.ServingsValidator(v); err != nil {
-			return &ValidationError{Name: "servings", err: fmt.Errorf(`ent: validator failed for field "servings": %w`, err)}
+			return &ValidationError{Name: "servings", err: fmt.Errorf(`ent: validator failed for field "Recipe.servings": %w`, err)}
 		}
 	}
 	return nil
@@ -191,9 +217,12 @@ func (rc *RecipeCreate) sqlSave(ctx context.Context) (*Recipe, error) {
 		}
 		return nil, err
 	}
-	if _node.ID == 0 {
-		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected Recipe.ID type: %T", _spec.ID.Value)
+		}
 	}
 	return _node, nil
 }
@@ -204,7 +233,7 @@ func (rc *RecipeCreate) createSpec() (*Recipe, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: recipe.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: recipe.FieldID,
 			},
 		}
@@ -253,6 +282,14 @@ func (rc *RecipeCreate) createSpec() (*Recipe, *sqlgraph.CreateSpec) {
 		})
 		_node.Nutrition = value
 	}
+	if value, ok := rc.mutation.User(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: recipe.FieldUser,
+		})
+		_node.User = value
+	}
 	if value, ok := rc.mutation.Servings(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
@@ -297,6 +334,7 @@ func (rcb *RecipeCreateBulk) Save(ctx context.Context) ([]*Recipe, error) {
 	for i := range rcb.builders {
 		func(i int, root context.Context) {
 			builder := rcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*RecipeMutation)
 				if !ok {
@@ -324,10 +362,6 @@ func (rcb *RecipeCreateBulk) Save(ctx context.Context) ([]*Recipe, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

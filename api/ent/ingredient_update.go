@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"adomeit.xyz/recipe/ent/ingredient"
@@ -106,14 +107,14 @@ func (iu *IngredientUpdate) ClearSource() *IngredientUpdate {
 }
 
 // AddRecipeIDs adds the "recipe" edge to the Recipe entity by IDs.
-func (iu *IngredientUpdate) AddRecipeIDs(ids ...int) *IngredientUpdate {
+func (iu *IngredientUpdate) AddRecipeIDs(ids ...string) *IngredientUpdate {
 	iu.mutation.AddRecipeIDs(ids...)
 	return iu
 }
 
 // AddRecipe adds the "recipe" edges to the Recipe entity.
 func (iu *IngredientUpdate) AddRecipe(r ...*Recipe) *IngredientUpdate {
-	ids := make([]int, len(r))
+	ids := make([]string, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -132,14 +133,14 @@ func (iu *IngredientUpdate) ClearRecipe() *IngredientUpdate {
 }
 
 // RemoveRecipeIDs removes the "recipe" edge to Recipe entities by IDs.
-func (iu *IngredientUpdate) RemoveRecipeIDs(ids ...int) *IngredientUpdate {
+func (iu *IngredientUpdate) RemoveRecipeIDs(ids ...string) *IngredientUpdate {
 	iu.mutation.RemoveRecipeIDs(ids...)
 	return iu
 }
 
 // RemoveRecipe removes "recipe" edges to Recipe entities.
 func (iu *IngredientUpdate) RemoveRecipe(r ...*Recipe) *IngredientUpdate {
-	ids := make([]int, len(r))
+	ids := make([]string, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -210,7 +211,7 @@ func (iu *IngredientUpdate) ExecX(ctx context.Context) {
 func (iu *IngredientUpdate) check() error {
 	if v, ok := iu.mutation.Name(); ok {
 		if err := ingredient.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Ingredient.name": %w`, err)}
 		}
 	}
 	return nil
@@ -319,7 +320,7 @@ func (iu *IngredientUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: recipe.FieldID,
 				},
 			},
@@ -335,7 +336,7 @@ func (iu *IngredientUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: recipe.FieldID,
 				},
 			},
@@ -354,7 +355,7 @@ func (iu *IngredientUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: recipe.FieldID,
 				},
 			},
@@ -462,14 +463,14 @@ func (iuo *IngredientUpdateOne) ClearSource() *IngredientUpdateOne {
 }
 
 // AddRecipeIDs adds the "recipe" edge to the Recipe entity by IDs.
-func (iuo *IngredientUpdateOne) AddRecipeIDs(ids ...int) *IngredientUpdateOne {
+func (iuo *IngredientUpdateOne) AddRecipeIDs(ids ...string) *IngredientUpdateOne {
 	iuo.mutation.AddRecipeIDs(ids...)
 	return iuo
 }
 
 // AddRecipe adds the "recipe" edges to the Recipe entity.
 func (iuo *IngredientUpdateOne) AddRecipe(r ...*Recipe) *IngredientUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]string, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -488,14 +489,14 @@ func (iuo *IngredientUpdateOne) ClearRecipe() *IngredientUpdateOne {
 }
 
 // RemoveRecipeIDs removes the "recipe" edge to Recipe entities by IDs.
-func (iuo *IngredientUpdateOne) RemoveRecipeIDs(ids ...int) *IngredientUpdateOne {
+func (iuo *IngredientUpdateOne) RemoveRecipeIDs(ids ...string) *IngredientUpdateOne {
 	iuo.mutation.RemoveRecipeIDs(ids...)
 	return iuo
 }
 
 // RemoveRecipe removes "recipe" edges to Recipe entities.
 func (iuo *IngredientUpdateOne) RemoveRecipe(r ...*Recipe) *IngredientUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]string, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -573,7 +574,7 @@ func (iuo *IngredientUpdateOne) ExecX(ctx context.Context) {
 func (iuo *IngredientUpdateOne) check() error {
 	if v, ok := iuo.mutation.Name(); ok {
 		if err := ingredient.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Ingredient.name": %w`, err)}
 		}
 	}
 	return nil
@@ -592,7 +593,7 @@ func (iuo *IngredientUpdateOne) sqlSave(ctx context.Context) (_node *Ingredient,
 	}
 	id, ok := iuo.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "ID", err: fmt.Errorf("missing Ingredient.ID for update")}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Ingredient.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := iuo.fields; len(fields) > 0 {
@@ -699,7 +700,7 @@ func (iuo *IngredientUpdateOne) sqlSave(ctx context.Context) (_node *Ingredient,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: recipe.FieldID,
 				},
 			},
@@ -715,7 +716,7 @@ func (iuo *IngredientUpdateOne) sqlSave(ctx context.Context) (_node *Ingredient,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: recipe.FieldID,
 				},
 			},
@@ -734,7 +735,7 @@ func (iuo *IngredientUpdateOne) sqlSave(ctx context.Context) (_node *Ingredient,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: recipe.FieldID,
 				},
 			},

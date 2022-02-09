@@ -8,7 +8,6 @@ import (
 
 	"adomeit.xyz/recipe/ent/ingredient"
 	"adomeit.xyz/recipe/ent/recipe"
-	"adomeit.xyz/recipe/ent/user"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 )
@@ -33,7 +32,6 @@ func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		ingredient.Table: ingredient.ValidColumn,
 		recipe.Table:     recipe.ValidColumn,
-		user.Table:       user.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {
@@ -145,7 +143,7 @@ func Sum(field string) AggregateFunc {
 	}
 }
 
-// ValidationError returns when validating a field fails.
+// ValidationError returns when validating a field or edge fails.
 type ValidationError struct {
 	Name string // Field or edge name.
 	err  error

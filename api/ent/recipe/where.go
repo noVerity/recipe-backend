@@ -9,28 +9,28 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Recipe {
+func ID(id string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Recipe {
+func IDEQ(id string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Recipe {
+func IDNEQ(id string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Recipe {
+func IDIn(ids ...string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -47,7 +47,7 @@ func IDIn(ids ...int) predicate.Recipe {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Recipe {
+func IDNotIn(ids ...string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -64,28 +64,28 @@ func IDNotIn(ids ...int) predicate.Recipe {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Recipe {
+func IDGT(id string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Recipe {
+func IDGTE(id string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Recipe {
+func IDLT(id string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Recipe {
+func IDLTE(id string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
 	})
@@ -123,6 +123,13 @@ func Instructions(v string) predicate.Recipe {
 func Nutrition(v string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldNutrition), v))
+	})
+}
+
+// User applies equality check predicate on the "user" field. It's identical to UserEQ.
+func User(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUser), v))
 	})
 }
 
@@ -685,6 +692,117 @@ func NutritionEqualFold(v string) predicate.Recipe {
 func NutritionContainsFold(v string) predicate.Recipe {
 	return predicate.Recipe(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldNutrition), v))
+	})
+}
+
+// UserEQ applies the EQ predicate on the "user" field.
+func UserEQ(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUser), v))
+	})
+}
+
+// UserNEQ applies the NEQ predicate on the "user" field.
+func UserNEQ(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldUser), v))
+	})
+}
+
+// UserIn applies the In predicate on the "user" field.
+func UserIn(vs ...string) predicate.Recipe {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Recipe(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldUser), v...))
+	})
+}
+
+// UserNotIn applies the NotIn predicate on the "user" field.
+func UserNotIn(vs ...string) predicate.Recipe {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Recipe(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldUser), v...))
+	})
+}
+
+// UserGT applies the GT predicate on the "user" field.
+func UserGT(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldUser), v))
+	})
+}
+
+// UserGTE applies the GTE predicate on the "user" field.
+func UserGTE(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldUser), v))
+	})
+}
+
+// UserLT applies the LT predicate on the "user" field.
+func UserLT(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldUser), v))
+	})
+}
+
+// UserLTE applies the LTE predicate on the "user" field.
+func UserLTE(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldUser), v))
+	})
+}
+
+// UserContains applies the Contains predicate on the "user" field.
+func UserContains(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldUser), v))
+	})
+}
+
+// UserHasPrefix applies the HasPrefix predicate on the "user" field.
+func UserHasPrefix(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldUser), v))
+	})
+}
+
+// UserHasSuffix applies the HasSuffix predicate on the "user" field.
+func UserHasSuffix(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldUser), v))
+	})
+}
+
+// UserEqualFold applies the EqualFold predicate on the "user" field.
+func UserEqualFold(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldUser), v))
+	})
+}
+
+// UserContainsFold applies the ContainsFold predicate on the "user" field.
+func UserContainsFold(v string) predicate.Recipe {
+	return predicate.Recipe(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldUser), v))
 	})
 }
 

@@ -11,6 +11,8 @@ const (
 	FieldUsername = "username"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// FieldRecipeShard holds the string denoting the recipeshard field in the database.
+	FieldRecipeShard = "recipe_shard"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
 	// Table holds the table name of the user in the database.
@@ -22,6 +24,7 @@ var Columns = []string{
 	FieldID,
 	FieldUsername,
 	FieldEmail,
+	FieldRecipeShard,
 	FieldPassword,
 }
 

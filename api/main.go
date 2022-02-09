@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
 	"adomeit.xyz/recipe/ent"
 	"entgo.io/ent/dialect"
@@ -12,24 +13,12 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v4/stdlib"
-)
-
-const (
-	db_url = "postgres://postgres:mysecretpassword@192.168.1.118:5432/recipe?sslmode=disable"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	// Open the database connection
-	db, err := sql.Open("pgx", getenv("DATABASE_URL", db_url))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Wrap the database connection in the ent driver and create the client
-	drv := entsql.OpenDB(dialect.Postgres, db)
-
-	client := ent.NewClient(ent.Driver(drv))
+	client := SetupClient()
 	defer client.Close()
 
 	// Run auto migration tool
@@ -38,23 +27,59 @@ func main() {
 		os.Exit(1)
 	}
 
-	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
-	mq := NewMQ(getenv("CLOUDAMQP_URL", "amqp://guest:guest@localhost:5672/"))
+	shard := getenv("SHARD", "0")
+
+	mq := NewMQ(getenv("CLOUDAMQP_URL", "amqp://guest:guest@localhost:5672/"), shard)
 	defer mq.Close()
 
 	go mq.AcceptIngredientResults(client)
 
+	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
 	// Set up the routes available in the API
 	r := SetupRouter(client, gin.Default(), manager, mq.RequestIngredients)
 	r.Run()
 }
 
-func SetupRouter(client *ent.Client, r *gin.Engine, auth *AuthManager, requestIngredients func(ingredients []IngredientEntry, recipeId int)) *gin.Engine {
-	NewUserController(r, client, auth)
+func SetupRouter(client *ent.Client, r *gin.Engine, auth *AuthManager, requestIngredients func(ingredients []IngredientEntry, recipeId string)) *gin.Engine {
 	NewIngredientController(r, client, auth)
 	NewRecipeController(r, client, auth, requestIngredients)
 
 	return r
+}
+
+const clientTimeout = 2 * 60 * time.Second
+
+func SetupClient() *ent.Client {
+
+	db_url := os.Getenv("DATABASE_URL")
+	var client *ent.Client
+	var e error
+	if len(db_url) == 0 {
+		client, e = ent.Open(dialect.SQLite, "file:ent?mode=memory&cache=shared&_fk=1")
+		if e != nil {
+			fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", e)
+			os.Exit(1)
+		}
+		return client
+	}
+	sleepTimer := time.Second * 3
+	for {
+		db, err := sql.Open("pgx", db_url)
+		if err == nil && db.Ping() == nil {
+
+			// Wrap the database connection in the ent driver and create the client
+			drv := entsql.OpenDB(dialect.Postgres, db)
+
+			return ent.NewClient(ent.Driver(drv))
+		}
+		sleepTimer = sleepTimer * 2
+		if sleepTimer > clientTimeout {
+			fmt.Fprintf(os.Stderr, "Unable to connect to database: %v (Retries timed out) \n", err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v (Retry in %v seconds) \n", err, sleepTimer)
+		time.Sleep(sleepTimer)
+	}
 }
 
 func getenv(key, fallback string) string {

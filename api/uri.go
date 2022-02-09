@@ -1,7 +1,7 @@
 package main
 
 type URIElement struct {
-	Name string `uri:"name" binding:"required"`
+	Id string `uri:"id" binding:"required"`
 }
 
 type QueryPagination struct {

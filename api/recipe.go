@@ -12,12 +12,15 @@ import (
 )
 
 type Recipe struct {
+	Id              string       `json:"id"`
+	Slug            string       `json:"slug"`
 	Name            string       `json:"name"`
 	IngredientsList string       `json:"ingredientslist"`
 	Instructions    string       `json:"instructions"`
 	Nutrition       string       `json:"nutrition"`
 	Servings        int          `json:"servings"`
 	Ingredients     []Ingredient `json:"ingredients,omitempty"`
+	User            string       `json:"user"`
 }
 
 type RecipeResult struct {
@@ -31,11 +34,14 @@ func RecipeModelToResponse(modelEntity *ent.Recipe) Recipe {
 		ingredients = append(ingredients, IngredientModelToResponse(entry))
 	}
 	return Recipe{
+		Id:              modelEntity.ID,
+		Slug:            modelEntity.Slug,
 		Name:            modelEntity.Name,
 		IngredientsList: modelEntity.Ingredientslist,
 		Instructions:    modelEntity.Instructions,
 		Nutrition:       modelEntity.Nutrition,
 		Servings:        modelEntity.Servings,
+		User:            modelEntity.User,
 		Ingredients:     ingredients,
 	}
 }
@@ -51,20 +57,20 @@ func RecipesToResponse(modelEntities []*ent.Recipe) []Recipe {
 type RecipeController struct {
 	router             *gin.Engine
 	client             *ent.Client
-	requestIngredients func(ingredients []IngredientEntry, recipeId int)
+	requestIngredients func(ingredients []IngredientEntry, recipeId string)
 }
 
 // NewRecipeController takes the gin engine and creates routes for CRUD on recipes
-func NewRecipeController(r *gin.Engine, client *ent.Client, auth *AuthManager, requestIngredients func(ingredients []IngredientEntry, recipeId int)) *RecipeController {
+func NewRecipeController(r *gin.Engine, client *ent.Client, auth *AuthManager, requestIngredients func(ingredients []IngredientEntry, recipeId string)) *RecipeController {
 	controller := RecipeController{r, client, requestIngredients}
 	userRoute := r.Group("/recipe", auth.AuthMiddleware())
 	{
 		userRoute.POST("", controller.HandleCreateRecipe)
-		userRoute.GET("/:name", controller.HandleGetRecipe)
-		userRoute.PUT("/:name", controller.HandleUpdateRecipe)
-		userRoute.PATCH("/:name", controller.HandleUpdateRecipe)
+		userRoute.GET("/:id", controller.HandleGetRecipe)
+		userRoute.PUT("/:id", controller.HandleUpdateRecipe)
+		userRoute.PATCH("/:id", controller.HandleUpdateRecipe)
 		userRoute.GET("", controller.HandleGetAllRecipes)
-		userRoute.DELETE("/:name", controller.HandleDeleteRecipe)
+		userRoute.DELETE("/:id", controller.HandleDeleteRecipe)
 	}
 	return &controller
 }
@@ -78,15 +84,6 @@ func (controller *RecipeController) HandleCreateRecipe(c *gin.Context) {
 
 	slug := slug.Make(newRecipe.Name)
 
-	_, err := controller.client.Recipe.Query().
-		Where(recipe.Slug(slug)).
-		First(c)
-
-	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "recipe with this name already exists"})
-		return
-	}
-
 	foundIngredients, missingIngredients := controller.GetIngredientsFromList(newRecipe.IngredientsList, c)
 
 	// TODO: Calculate nutritional value for the recipe
@@ -98,6 +95,7 @@ func (controller *RecipeController) HandleCreateRecipe(c *gin.Context) {
 		SetInstructions(newRecipe.Instructions).
 		SetNutrition("").
 		SetServings(newRecipe.Servings).
+		SetUser(c.GetString("user")).
 		AddIngredients(foundIngredients...).
 		Save(c)
 
@@ -125,7 +123,7 @@ func (controller *RecipeController) HandleUpdateRecipe(c *gin.Context) {
 	}
 
 	previous, err := controller.client.Recipe.Query().
-		Where(recipe.Slug(uriElement.Name)).
+		Where(recipe.ID(uriElement.Id)).
 		First(c)
 
 	if err != nil {
@@ -158,6 +156,7 @@ func (controller *RecipeController) HandleUpdateRecipe(c *gin.Context) {
 
 	result, err := controller.client.Recipe.UpdateOne(previous).
 		SetName(update.Name).
+		SetSlug(slug.Make(update.Name)).
 		SetInstructions(update.Instructions).
 		SetServings(update.Servings).
 		SetIngredientslist(update.IngredientsList).
@@ -183,7 +182,7 @@ func (controller *RecipeController) HandleGetRecipe(c *gin.Context) {
 	}
 
 	result, err := controller.client.Recipe.Query().
-		Where(recipe.SlugEqualFold(uriElement.Name)).
+		Where(recipe.ID(uriElement.Id)).
 		WithIngredients().
 		First(c)
 
@@ -259,7 +258,7 @@ func (controller *RecipeController) HandleDeleteRecipe(c *gin.Context) {
 	}
 
 	result, err := controller.client.Recipe.Query().
-		Where(recipe.Slug(uriElement.Name)).
+		Where(recipe.ID(uriElement.Id)).
 		First(c)
 
 	if err != nil {

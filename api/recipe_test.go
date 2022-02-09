@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSetupRecipeRoutes(t *testing.T) {
+	os.Setenv("SHARD", "TEST")
 	client, requestTester := SetupTestORM(t)
 	defer client.Close()
 
@@ -59,18 +62,27 @@ func TestSetupRecipeRoutes(t *testing.T) {
 		}`,
 	)
 
+	var recipe Recipe
+	json.Unmarshal(w.Body.Bytes(), &recipe)
 	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":1}`, w.Body.String())
+	assert.Equal(t, "The Cake", recipe.Name)
+	assert.Equal(t, "1 dose Hope\n1 tbsp Banana", recipe.IngredientsList)
+	assert.Equal(t, 1, recipe.Servings)
+	assert.Equal(t, "Throw everything together and hope for the best", recipe.Instructions)
 
 	// Retrieve the created recipe
 	w = requestTester(
 		http.MethodGet,
-		recipeRoute+"/the-cake",
+		recipeRoute+"/"+recipe.Id,
 		``,
 	)
 
+	json.Unmarshal(w.Body.Bytes(), &recipe)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":1,"ingredients":[{"name":"Hope","calories":999,"fat":1,"carbohydrates":2,"protein":3},{"name":"Banana","calories":123.4,"fat":3,"carbohydrates":2,"protein":1}]}`, w.Body.String())
+	assert.Equal(t, "The Cake", recipe.Name)
+	assert.Equal(t, "1 dose Hope\n1 tbsp Banana", recipe.IngredientsList)
+	assert.Equal(t, 1, recipe.Servings)
+	assert.Equal(t, "Throw everything together and hope for the best", recipe.Instructions)
 
 	// Retrieve the all recipes
 	w = requestTester(
@@ -79,13 +91,17 @@ func TestSetupRecipeRoutes(t *testing.T) {
 		``,
 	)
 
+	var result RecipeResult
+	json.Unmarshal(w.Body.Bytes(), &result)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"pagination":{"count":1,"offset":0},"data":[{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":1}]}`, w.Body.String())
+	assert.Equal(t, 1, result.Pagination.Count)
+	assert.Equal(t, 0, result.Pagination.Offset)
+	assert.Equal(t, 1, len(result.Data))
 
 	// Update recipe
 	w = requestTester(
 		http.MethodPut,
-		recipeRoute+"/the-cake",
+		recipeRoute+"/"+recipe.Id,
 		`{
 			"name": "The Cake",
 			"ingredientslist": "1 dose Hope\n1 tbsp Banana",
@@ -94,17 +110,22 @@ func TestSetupRecipeRoutes(t *testing.T) {
 		}`,
 	)
 
+	json.Unmarshal(w.Body.Bytes(), &recipe)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":4}`, w.Body.String())
+	assert.Equal(t, 4, recipe.Servings)
 
 	// Delete recipe
 	w = requestTester(
 		http.MethodDelete,
-		recipeRoute+"/the-cake",
+		recipeRoute+"/"+recipe.Id,
 		``,
 	)
 
+	json.Unmarshal(w.Body.Bytes(), &recipe)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, `{"name":"The Cake","ingredientslist":"1 dose Hope\n1 tbsp Banana","instructions":"Throw everything together and hope for the best","nutrition":"","servings":4}`, w.Body.String())
+	assert.Equal(t, "The Cake", recipe.Name)
+	assert.Equal(t, "1 dose Hope\n1 tbsp Banana", recipe.IngredientsList)
+	assert.Equal(t, 4, recipe.Servings)
+	assert.Equal(t, "Throw everything together and hope for the best", recipe.Instructions)
 
 }

@@ -27,6 +27,7 @@ func (User) Fields() []ent.Field {
 			Unique().
 			NotEmpty().
 			Match(validEmail),
+		field.String("recipeShard"),
 		field.String("password").
 			NotEmpty(),
 	}
