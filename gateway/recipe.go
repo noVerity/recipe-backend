@@ -65,6 +65,7 @@ func (controller RecipeController) HandleIdRedirectRoute(c *gin.Context) {
 	director := func(req *http.Request) {
 		shardUrl.Path = req.URL.Path
 		req.URL = shardUrl
+		req.Host = shardUrl.Host
 	}
 	proxy := &httputil.ReverseProxy{Director: director}
 	proxy.ServeHTTP(c.Writer, c.Request)
@@ -87,6 +88,7 @@ func (controller RecipeController) HandleAuthRedirectRoute(c *gin.Context) {
 	director := func(req *http.Request) {
 		shardUrl.Path = req.URL.Path
 		req.URL = shardUrl
+		req.Host = shardUrl.Host
 	}
 	proxy := &httputil.ReverseProxy{Director: director}
 	proxy.ServeHTTP(c.Writer, c.Request)
