@@ -164,6 +164,15 @@ resource "heroku_build" "recipe_one" {
   }
 }
 
+resource "heroku_build" "recipe_two" {
+  app        = heroku_app.recipe_two.id
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-go.git"]
+
+  source {
+    path = "api"
+  }
+}
+
 resource "heroku_formation" "gateway" {
   app        = heroku_app.gateway.id
   type       = "web"
@@ -193,7 +202,7 @@ resource "heroku_formation" "recipe_two" {
   type       = "web"
   quantity   = 1
   size       = "free"
-  depends_on = [heroku_build.recipe_one]
+  depends_on = [heroku_build.recipe_two]
 }
 
 resource "heroku_addon_attachment" "mq_recipe_two" {
