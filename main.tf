@@ -95,6 +95,7 @@ resource "heroku_app" "recipe_one" {
 
   config_vars = {
     GIN_MODE        = "release",
+    SHARD           = "one",
     "APP_IN_QUEUE"  = "ingredients_results",
     "APP_OUT_QUEUE" = "ingredients_lookup"
   }
@@ -109,6 +110,7 @@ resource "heroku_app" "recipe_two" {
 
   config_vars = {
     GIN_MODE        = "release",
+    SHARD           = "two",
     "APP_IN_QUEUE"  = "ingredients_results",
     "APP_OUT_QUEUE" = "ingredients_lookup"
   }
