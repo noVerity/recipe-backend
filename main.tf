@@ -44,18 +44,18 @@ resource "heroku_app" "gateway" {
   name   = "${local.recipe_app_name}-gateway"
   region = var.heroku_region
 
-    config_vars = {
-    GIN_MODE        = "release",
+  config_vars = {
+    GIN_MODE         = "release",
     APP_USER_SERVICE = heroku_app.user.web_url,
     APP_RECIPE_SHARDS = jsonencode({
       "shards" = [
         {
-          "name": "one",
-          "url": heroku_app.recipe_one.web_url
+          "name" : "one",
+          "url" : heroku_app.recipe_one.web_url
         },
         {
-          "name": "two",
-          "url": heroku_app.recipe_two.web_url
+          "name" : "two",
+          "url" : heroku_app.recipe_two.web_url
         }
       ]
     }),
@@ -69,17 +69,17 @@ resource "heroku_app" "user" {
   name   = "${local.recipe_app_name}-user"
   region = var.heroku_region
 
-    config_vars = {
-    GIN_MODE        = "release",
+  config_vars = {
+    GIN_MODE = "release",
     APP_RECIPE_SHARDS = jsonencode({
       "shards" = [
         {
-          "name": "one",
-          "url": heroku_app.recipe_one.web_url
+          "name" : "one",
+          "url" : heroku_app.recipe_one.web_url
         },
         {
-          "name": "two",
-          "url": heroku_app.recipe_two.web_url
+          "name" : "two",
+          "url" : heroku_app.recipe_two.web_url
         }
       ]
     }),
