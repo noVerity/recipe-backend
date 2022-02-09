@@ -20,7 +20,7 @@ type authHeader struct {
 type Claims struct {
 	Username string `json:"username"`
 	Shard    string `json:"shard"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 func NewAuthManager(secret string) *AuthManager {
@@ -81,9 +81,9 @@ func (manager *AuthManager) GetToken(username string, shard string) (string, err
 	claims := &Claims{
 		Username: username,
 		Shard:    shard,
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
-			ExpiresAt: expirationTime.Unix(),
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
 
