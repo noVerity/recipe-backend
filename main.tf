@@ -46,16 +46,16 @@ resource "heroku_app" "gateway" {
 
     config_vars = {
     GIN_MODE        = "release",
-    APP_USER_SERVICE = user.web_url,
+    APP_USER_SERVICE = heroku_app.user.web_url,
     APP_RECIPE_SHARDS = jsonencode({
       "shards" = [
         {
           "name": "one",
-          "url": recipe_one.web_url
+          "url": heroku_app.recipe_one.web_url
         },
         {
           "name": "two",
-          "url": recipe_two.web_url
+          "url": heroku_app.recipe_two.web_url
         }
       ]
     }),
@@ -75,11 +75,11 @@ resource "heroku_app" "user" {
       "shards" = [
         {
           "name": "one",
-          "url": recipe_one.web_url
+          "url": heroku_app.recipe_one.web_url
         },
         {
           "name": "two",
-          "url": recipe_two.web_url
+          "url": heroku_app.recipe_two.web_url
         }
       ]
     }),
