@@ -6,6 +6,8 @@ on:
     paths:
       - 'api/**'
       - 'forager/**'
+      - 'gateway/**'
+      - 'user/**'
       - 'main.tf'
 
 jobs:
