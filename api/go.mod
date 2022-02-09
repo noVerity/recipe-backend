@@ -2,6 +2,8 @@ module adomeit.xyz/recipe
 
 go 1.17
 
+// +heroku goVersion go1.17
+
 require (
 	entgo.io/ent v0.10.0
 	github.com/gin-gonic/gin v1.7.7
