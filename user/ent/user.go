@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"adomeit.xyz/recipe/ent/user"
+	"adomeit.xyz/user/ent/user"
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -19,6 +19,8 @@ type User struct {
 	Username string `json:"username,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
+	// RecipeShard holds the value of the "recipeShard" field.
+	RecipeShard string `json:"recipeShard,omitempty"`
 	// Password holds the value of the "password" field.
 	Password string `json:"password,omitempty"`
 }
@@ -30,7 +32,7 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case user.FieldID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldUsername, user.FieldEmail, user.FieldPassword:
+		case user.FieldUsername, user.FieldEmail, user.FieldRecipeShard, user.FieldPassword:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type User", columns[i])
@@ -64,6 +66,12 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
 				u.Email = value.String
+			}
+		case user.FieldRecipeShard:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field recipeShard", values[i])
+			} else if value.Valid {
+				u.RecipeShard = value.String
 			}
 		case user.FieldPassword:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -103,6 +111,8 @@ func (u *User) String() string {
 	builder.WriteString(u.Username)
 	builder.WriteString(", email=")
 	builder.WriteString(u.Email)
+	builder.WriteString(", recipeShard=")
+	builder.WriteString(u.RecipeShard)
 	builder.WriteString(", password=")
 	builder.WriteString(u.Password)
 	builder.WriteByte(')')

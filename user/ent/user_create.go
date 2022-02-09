@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"adomeit.xyz/recipe/ent/user"
+	"adomeit.xyz/user/ent/user"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -28,6 +28,12 @@ func (uc *UserCreate) SetUsername(s string) *UserCreate {
 // SetEmail sets the "email" field.
 func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	uc.mutation.SetEmail(s)
+	return uc
+}
+
+// SetRecipeShard sets the "recipeShard" field.
+func (uc *UserCreate) SetRecipeShard(s string) *UserCreate {
+	uc.mutation.SetRecipeShard(s)
 	return uc
 }
 
@@ -129,6 +135,9 @@ func (uc *UserCreate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "email": %w`, err)}
 		}
 	}
+	if _, ok := uc.mutation.RecipeShard(); !ok {
+		return &ValidationError{Name: "recipeShard", err: errors.New(`ent: missing required field "recipeShard"`)}
+	}
 	if _, ok := uc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "password"`)}
 	}
@@ -148,7 +157,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		}
 		return nil, err
 	}
-	if _node.ID == 0 {
+	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
 		_node.ID = int(id)
 	}
@@ -185,6 +194,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Column: user.FieldEmail,
 		})
 		_node.Email = value
+	}
+	if value, ok := uc.mutation.RecipeShard(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldRecipeShard,
+		})
+		_node.RecipeShard = value
 	}
 	if value, ok := uc.mutation.Password(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

@@ -1,0 +1,49 @@
+name: Check User Service Build
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'user/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Go environment
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.17.3
+
+      - uses: actions/checkout@v2
+
+      - name: Cache
+        uses: actions/cache@v2.1.6
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ env.cache-name }}-
+            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-
+
+      - name: Build
+        env: 
+          GIN_MODE: "release"
+          GOPROXY: "https://proxy.golang.org"
+        run: go build .
+        working-directory: ./user
+
+      - name: Test
+        env: 
+          GIN_MODE: "release"
+          GOPROXY: "https://proxy.golang.org"
+        run: go test -v
+        working-directory: ./user
+
+      - name: Staticcheck
+        run: |
+          go get -u honnef.co/go/tools/cmd/staticcheck
+          staticcheck ./...
+        working-directory: ./user

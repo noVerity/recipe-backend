@@ -1,0 +1,81 @@
+version: '3.7'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9.13-alpine
+    hostname: my-rabbit
+
+  recipe-db-one:
+    image: postgres:14.1-alpine
+    environment:
+      - POSTGRES_USER=recipeuser
+      - POSTGRES_PASSWORD=recipeuserpassword
+      - POSTGRES_DB=recipes
+
+  recipe-db-two:
+    image: postgres:14.1-alpine
+    environment:
+      - POSTGRES_USER=recipeuser
+      - POSTGRES_PASSWORD=recipeuserpassword
+      - POSTGRES_DB=recipes
+
+  user-db:
+    image: postgres:14.1-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=userpassword
+      - POSTGRES_DB=users
+
+  user:
+    build: ./user
+    environment:
+      - JWT_SECRET=TEST_SECRET
+      - DATABASE_URL=postgres://user:userpassword@user-db:5432/users
+      - APP_RECIPE_SHARDS={"shards":[{"name":"one","url":"http://recipe-one:8080"},{"name":"two","url":"http://recipe-two:8080"}]}
+      - PORT=8080
+      - GIN_MODE=release
+
+  forager:
+    build: ./forager
+    environment:
+      - APP_TOKEN=SUPER_SECRET
+      - APP_FOODDATA_TOKEN=SUPER_SECRET
+      - APP_OUT_QUEUE=ingredients_results
+      - APP_IN_QUEUE=ingredients_lookup
+      - CLOUDAMQP_URL=amqp://guest:guest@rabbitmq
+
+  recipe-one:
+    build: ./api
+    environment:
+      - JWT_SECRET=TEST_SECRET
+      - DATABASE_URL=postgres://recipeuser:recipeuserpassword@recipe-db-one:5432/recipes
+      - CLOUDAMQP_URL=amqp://guest:guest@rabbitmq
+      - SHARD=one
+      - APP_IN_QUEUE=ingredients_results
+      - APP_OUT_QUEUE=ingredients_lookup
+      - PORT=8080
+      - GIN_MODE=release
+
+  recipe-two:
+    build: ./api
+    environment:
+      - JWT_SECRET=TEST_SECRET
+      - DATABASE_URL=postgres://recipeuser:recipeuserpassword@recipe-db-two:5432/recipes
+      - CLOUDAMQP_URL=amqp://guest:guest@rabbitmq
+      - SHARD=two
+      - APP_IN_QUEUE=ingredients_results
+      - APP_OUT_QUEUE=ingredients_lookup
+      - PORT=8080
+      - GIN_MODE=release
+
+  gateway:
+    build: ./gateway
+    ports:
+      - 8080:8080
+    environment:
+      - JWT_SECRET=TEST_SECRET
+      - APP_USER_SERVICE=http://user:8080
+      - APP_RECIPE_SHARDS={"shards":[{"name":"one","url":"http://recipe-one:8080"},{"name":"two","url":"http://recipe-two:8080"}]}
+      - PORT=8080
+      - GIN_MODE=release
+      

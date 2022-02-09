@@ -14,7 +14,7 @@ import (
 type Recipe struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
 	// Slug holds the value of the "slug" field.
 	Slug string `json:"slug,omitempty"`
 	// Name holds the value of the "name" field.
@@ -25,6 +25,8 @@ type Recipe struct {
 	Instructions string `json:"instructions,omitempty"`
 	// Nutrition holds the value of the "nutrition" field.
 	Nutrition string `json:"nutrition,omitempty"`
+	// User holds the value of the "user" field.
+	User string `json:"user,omitempty"`
 	// Servings holds the value of the "servings" field.
 	Servings int `json:"servings,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -55,9 +57,9 @@ func (*Recipe) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case recipe.FieldID, recipe.FieldServings:
+		case recipe.FieldServings:
 			values[i] = new(sql.NullInt64)
-		case recipe.FieldSlug, recipe.FieldName, recipe.FieldIngredientslist, recipe.FieldInstructions, recipe.FieldNutrition:
+		case recipe.FieldID, recipe.FieldSlug, recipe.FieldName, recipe.FieldIngredientslist, recipe.FieldInstructions, recipe.FieldNutrition, recipe.FieldUser:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Recipe", columns[i])
@@ -75,11 +77,11 @@ func (r *Recipe) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case recipe.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value.Valid {
+				r.ID = value.String
 			}
-			r.ID = int(value.Int64)
 		case recipe.FieldSlug:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field slug", values[i])
@@ -109,6 +111,12 @@ func (r *Recipe) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field nutrition", values[i])
 			} else if value.Valid {
 				r.Nutrition = value.String
+			}
+		case recipe.FieldUser:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field user", values[i])
+			} else if value.Valid {
+				r.User = value.String
 			}
 		case recipe.FieldServings:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -159,6 +167,8 @@ func (r *Recipe) String() string {
 	builder.WriteString(r.Instructions)
 	builder.WriteString(", nutrition=")
 	builder.WriteString(r.Nutrition)
+	builder.WriteString(", user=")
+	builder.WriteString(r.User)
 	builder.WriteString(", servings=")
 	builder.WriteString(fmt.Sprintf("%v", r.Servings))
 	builder.WriteByte(')')

@@ -26,12 +26,13 @@ var (
 	}
 	// RecipesColumns holds the columns for the "recipes" table.
 	RecipesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "slug", Type: field.TypeString, Unique: true},
+		{Name: "id", Type: field.TypeString, Unique: true},
+		{Name: "slug", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "ingredientslist", Type: field.TypeString},
 		{Name: "instructions", Type: field.TypeString},
 		{Name: "nutrition", Type: field.TypeString},
+		{Name: "user", Type: field.TypeString},
 		{Name: "servings", Type: field.TypeInt},
 	}
 	// RecipesTable holds the schema information for the "recipes" table.
@@ -40,22 +41,9 @@ var (
 		Columns:    RecipesColumns,
 		PrimaryKey: []*schema.Column{RecipesColumns[0]},
 	}
-	// UsersColumns holds the columns for the "users" table.
-	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "username", Type: field.TypeString, Unique: true},
-		{Name: "email", Type: field.TypeString, Unique: true},
-		{Name: "password", Type: field.TypeString},
-	}
-	// UsersTable holds the schema information for the "users" table.
-	UsersTable = &schema.Table{
-		Name:       "users",
-		Columns:    UsersColumns,
-		PrimaryKey: []*schema.Column{UsersColumns[0]},
-	}
 	// RecipeIngredientsColumns holds the columns for the "recipe_ingredients" table.
 	RecipeIngredientsColumns = []*schema.Column{
-		{Name: "recipe_id", Type: field.TypeInt},
+		{Name: "recipe_id", Type: field.TypeString},
 		{Name: "ingredient_id", Type: field.TypeInt},
 	}
 	// RecipeIngredientsTable holds the schema information for the "recipe_ingredients" table.
@@ -82,7 +70,6 @@ var (
 	Tables = []*schema.Table{
 		IngredientsTable,
 		RecipesTable,
-		UsersTable,
 		RecipeIngredientsTable,
 	}
 )

@@ -26,7 +26,6 @@ type config struct {
 type hooks struct {
 	Ingredient []ent.Hook
 	Recipe     []ent.Hook
-	User       []ent.Hook
 }
 
 // Options applies the options on the config object.
