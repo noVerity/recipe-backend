@@ -1,11 +1,11 @@
 build:
-	go build .
+	go build ./...
 
 run:
-	go run .
+	go run ./..
 
 test:
-	go test -v
+	go test -v ./..
 
 generate:
 	go generate ./ent

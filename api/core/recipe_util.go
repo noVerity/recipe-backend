@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"strings"
@@ -13,9 +13,9 @@ type IngredientEntry struct {
 }
 
 // ParseIngredientList takes a string and splits it into individual ingredients with their amounts
-func ParseIngredientList(ingredientList string) []IngredientEntry {
+func ParseIngredientList(ingredientList string) []gofromto.Measure {
 	ingredients := strings.Split(ingredientList, "\n")
-	var entryList []IngredientEntry
+	var entryList []gofromto.Measure
 	for _, line := range ingredients {
 		measure, err := gofromto.ParseMeasure(line)
 
@@ -23,11 +23,7 @@ func ParseIngredientList(ingredientList string) []IngredientEntry {
 			continue
 		}
 
-		entryList = append(entryList, IngredientEntry{
-			Name:    measure.Name,
-			Amount:  float32(measure.Amount),
-			Measure: measure.Unit.String(),
-		})
+		entryList = append(entryList, measure)
 	}
 	return entryList
 }

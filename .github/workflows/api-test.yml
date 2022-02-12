@@ -32,14 +32,14 @@ jobs:
         env: 
           GIN_MODE: "release"
           GOPROXY: "https://proxy.golang.org"
-        run: go build .
+        run: go build ./...
         working-directory: ./api
 
       - name: Test
         env: 
           GIN_MODE: "release"
           GOPROXY: "https://proxy.golang.org"
-        run: go test -v
+        run: go test -v ./...
         working-directory: ./api
 
       - name: Staticcheck

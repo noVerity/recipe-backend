@@ -1,12 +1,10 @@
-package main
+package rest
 
 import (
-	"net/http"
-
+	"adomeit.xyz/recipe/core"
 	"adomeit.xyz/recipe/ent"
-	"adomeit.xyz/recipe/ent/ingredient"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type Ingredient struct {
@@ -22,7 +20,7 @@ type IngredientsResult struct {
 	Data []Ingredient `json:"data"`
 }
 
-func IngredientModelToResponse(modelEntity *ent.Ingredient) Ingredient {
+func ingredientModelToResponse(modelEntity *ent.Ingredient) Ingredient {
 	return Ingredient{
 		Name:          modelEntity.Name,
 		Calories:      modelEntity.Calories,
@@ -32,22 +30,31 @@ func IngredientModelToResponse(modelEntity *ent.Ingredient) Ingredient {
 	}
 }
 
-func IngredientsToResponse(modelEntities []*ent.Ingredient) []Ingredient {
+func ingredientsToResponse(modelEntities []*ent.Ingredient) []Ingredient {
 	responseSlice := make([]Ingredient, len(modelEntities))
 	for i, element := range modelEntities {
-		responseSlice[i] = IngredientModelToResponse(element)
+		responseSlice[i] = ingredientModelToResponse(element)
 	}
 	return responseSlice
 }
 
+func (ingredient Ingredient) ToModel() core.Ingredient {
+	return core.Ingredient{
+		Name:          ingredient.Name,
+		Calories:      ingredient.Calories,
+		Fat:           ingredient.Fat,
+		Carbohydrates: ingredient.Carbohydrates,
+		Protein:       ingredient.Protein,
+	}
+}
+
 type IngredientController struct {
-	router *gin.Engine
-	client *ent.Client
+	core *core.IngredientCore
 }
 
 // NewIngredientController takes the gin engine and creates routes for CRUD on ingredients
-func NewIngredientController(r *gin.Engine, client *ent.Client, auth *AuthManager) *IngredientController {
-	controller := IngredientController{r, client}
+func NewIngredientController(r *gin.Engine, core *core.IngredientCore, auth *AuthManager) *IngredientController {
+	controller := IngredientController{core}
 	userRoute := r.Group("/ingredient", auth.AuthMiddleware())
 	{
 		userRoute.POST("", controller.HandleCreateIngredient)
@@ -68,29 +75,14 @@ func (controller *IngredientController) HandleCreateIngredient(c *gin.Context) {
 		return
 	}
 
-	_, err := controller.client.Ingredient.Query().
-		Where(ingredient.NameEqualFold(newIngredient.Name)).
-		First(c)
-
-	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "ingredient with this name already exists"})
-		return
-	}
-
-	createdIngredient, err := controller.client.Ingredient.Create().
-		SetName(newIngredient.Name).
-		SetCalories(newIngredient.Calories).
-		SetFat(newIngredient.Fat).
-		SetCarbohydrates(newIngredient.Carbohydrates).
-		SetProtein(newIngredient.Protein).
-		Save(c)
+	createdIngredient, err := controller.core.Create(newIngredient.ToModel(), c)
 
 	if err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "ingredient with this name already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, IngredientModelToResponse(createdIngredient))
+	c.JSON(http.StatusCreated, ingredientModelToResponse(createdIngredient))
 }
 
 // HandleUpdateIngredient updates an ingredient
@@ -107,29 +99,14 @@ func (controller *IngredientController) HandleUpdateIngredient(c *gin.Context) {
 		return
 	}
 
-	previous, err := controller.client.Ingredient.Query().
-		Where(ingredient.NameEqualFold(uriElement.Id)).
-		First(c)
-
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ingredient does not exist"})
-		return
-	}
-
-	result, err := controller.client.Ingredient.UpdateOne(previous).
-		SetName(update.Name).
-		SetCalories(update.Calories).
-		SetFat(update.Fat).
-		SetCarbohydrates(update.Carbohydrates).
-		SetProtein(update.Protein).
-		Save(c)
+	result, err := controller.core.Update(uriElement.Id, update.ToModel(), c)
 
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, IngredientModelToResponse(result))
+	c.JSON(http.StatusOK, ingredientModelToResponse(result))
 }
 
 // HandleGetIngredient returns an ingredient
@@ -140,19 +117,17 @@ func (controller *IngredientController) HandleGetIngredient(c *gin.Context) {
 		return
 	}
 
-	result, err := controller.client.Ingredient.Query().
-		Where(ingredient.NameEqualFold(uriElement.Id)).
-		First(c)
+	result, err := controller.core.Get(uriElement.Id, c)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ingredient not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, IngredientModelToResponse(result))
+	c.JSON(http.StatusOK, ingredientModelToResponse(result))
 }
 
-// HandleGetIngredient returns an ingredient
+// HandleGetAllIngredients returns all ingredients within offset and limit
 func (controller *IngredientController) HandleGetAllIngredients(c *gin.Context) {
 	var query QueryPagination
 	if err := c.ShouldBind(&query); err != nil {
@@ -164,10 +139,7 @@ func (controller *IngredientController) HandleGetAllIngredients(c *gin.Context) 
 		query.Limit = 1000
 	}
 
-	count, err := controller.client.
-		Ingredient.
-		Query().
-		Count(c)
+	count, result, err := controller.core.GetAll(query.Limit, query.Offset, c)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "encountered error"})
@@ -187,16 +159,6 @@ func (controller *IngredientController) HandleGetAllIngredients(c *gin.Context) 
 		return
 	}
 
-	result, err := controller.client.Ingredient.Query().
-		Limit(query.Limit).
-		Offset(query.Offset).
-		All(c)
-
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "nothing found"})
-		return
-	}
-
 	c.JSON(http.StatusOK, IngredientsResult{
 		PagedResult{
 			Pagination: PagingInformation{
@@ -204,7 +166,7 @@ func (controller *IngredientController) HandleGetAllIngredients(c *gin.Context) 
 				Count:  count,
 			},
 		},
-		IngredientsToResponse(result),
+		ingredientsToResponse(result),
 	})
 }
 
@@ -216,21 +178,12 @@ func (controller *IngredientController) HandleDeleteIngredient(c *gin.Context) {
 		return
 	}
 
-	result, err := controller.client.Ingredient.Query().
-		Where(ingredient.NameEqualFold(uriElement.Id)).
-		First(c)
+	result, err := controller.core.Delete(uriElement.Id, c)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ingredient not found"})
 		return
 	}
 
-	err = controller.client.Ingredient.DeleteOne(result).Exec(c)
-
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, IngredientModelToResponse(result))
+	c.JSON(http.StatusOK, ingredientModelToResponse(result))
 }
