@@ -1,4 +1,4 @@
-package main
+package rest
 
 import (
 	"net/http"
@@ -90,8 +90,8 @@ func TestSetupIngredientRoutes(t *testing.T) {
 		}`,
 	)
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Equal(t, `{"error":"ingredient does not exist"}`, w.Body.String())
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, `{"error":"ent: ingredient not found"}`, w.Body.String())
 
 	// Update our ingredient
 	w = requestTester(

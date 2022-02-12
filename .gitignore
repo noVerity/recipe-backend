@@ -1,4 +1,5 @@
 .vscode/
+.idea
 
 .terraform
 __pycache__/

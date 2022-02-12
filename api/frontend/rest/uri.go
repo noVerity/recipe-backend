@@ -1,4 +1,4 @@
-package main
+package rest
 
 type URIElement struct {
 	Id string `uri:"id" binding:"required"`

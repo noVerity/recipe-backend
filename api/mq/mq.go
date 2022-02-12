@@ -1,24 +1,25 @@
-package main
+package mq
 
 import (
-	"context"
 	"encoding/json"
+	"github.com/noVerity/gofromto"
 	"log"
 	"math"
 	"sync"
 	"time"
 
-	"adomeit.xyz/recipe/ent"
 	"github.com/streadway/amqp"
 )
 
 type MQ struct {
-	mu         sync.Mutex
-	connection *amqp.Connection
-	channel    *amqp.Channel
-	location   string
-	delay      time.Duration
-	shard      string
+	mu          sync.Mutex
+	connection  *amqp.Connection
+	channel     *amqp.Channel
+	location    string
+	delay       time.Duration
+	shard       string
+	lookupQueue string
+	resultQueue string
 
 	LookupQueue *amqp.Queue
 	ResultQueue *amqp.Queue
@@ -40,8 +41,8 @@ type IngredientMQResult struct {
 	Carbohydrates float32 `json:"carbohydrates"`
 }
 
-func NewMQ(connectionString string, shard string) *MQ {
-	mq := &MQ{sync.Mutex{}, nil, nil, connectionString, 0, shard, nil, nil}
+func NewMQ(connectionString string, shard string, lookupQueue string, resultQueue string) *MQ {
+	mq := &MQ{sync.Mutex{}, nil, nil, connectionString, 0, shard, lookupQueue, resultQueue, nil, nil}
 
 	return mq
 }
@@ -116,12 +117,12 @@ func (mq *MQ) channelDeclare() error {
 	mq.mu.Lock()
 	defer mq.mu.Unlock()
 	lookupQueue, err := mq.channel.QueueDeclare(
-		getenv("APP_OUT_QUEUE", "ingredients_lookup"), // name
-		false, // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+		mq.lookupQueue, // name
+		false,          // durable
+		false,          // delete when unused
+		false,          // exclusive
+		false,          // no-wait
+		nil,            // arguments
 	)
 
 	if err != nil {
@@ -131,12 +132,12 @@ func (mq *MQ) channelDeclare() error {
 	mq.LookupQueue = &lookupQueue
 
 	resultQueue, err := mq.channel.QueueDeclare(
-		getenv("APP_IN_QUEUE", "ingredients_lookup_in")+mq.shard, // name
-		false, // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+		mq.resultQueue+mq.shard, // name
+		false,                   // durable
+		false,                   // delete when unused
+		false,                   // exclusive
+		false,                   // no-wait
+		nil,                     // arguments
 	)
 
 	if err != nil {
@@ -148,7 +149,7 @@ func (mq *MQ) channelDeclare() error {
 	return nil
 }
 
-func (mq *MQ) RequestIngredients(entries []IngredientEntry, recipeID string) {
+func (mq *MQ) RequestIngredients(entries []gofromto.Measure, recipeID string) {
 	mq.Connect()
 
 	for _, entry := range entries {
@@ -174,9 +175,14 @@ func (mq *MQ) RequestIngredients(entries []IngredientEntry, recipeID string) {
 	}
 }
 
-func (mq *MQ) AcceptIngredientResults(client *ent.Client) {
+func (mq *MQ) AcceptIngredientResults() (chan IngredientMQResult, error) {
+	ingredientResults := make(chan IngredientMQResult)
 
-	mq.Connect()
+	err := mq.Connect()
+
+	if err != nil {
+		return ingredientResults, err
+	}
 
 	msgs, err := mq.channel.Consume(
 		mq.ResultQueue.Name, // queue
@@ -187,41 +193,26 @@ func (mq *MQ) AcceptIngredientResults(client *ent.Client) {
 		false,               // no-wait
 		nil,                 // args
 	)
-	failOnError(err, "Failed to register a consumer")
 
-	forever := make(chan bool)
+	if err != nil {
+		close(ingredientResults)
+		return ingredientResults, err
+	}
 
 	go func() {
 		for d := range msgs {
 			var message IngredientMQResult
-			json.Unmarshal(d.Body, &message)
+			err := json.Unmarshal(d.Body, &message)
+			if err != nil {
+				log.Printf("Invalid message")
+				continue
+			}
 			log.Printf("Received a message: %v", message)
-			CreateIngredientFromMessage(client, message)
+			ingredientResults <- message
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
-}
-
-func CreateIngredientFromMessage(client *ent.Client, message IngredientMQResult) {
-	ctx := context.Background()
-	ingredient, err := client.Ingredient.Create().
-		SetName(message.SearchTerm).
-		SetCalories(message.Calories).
-		SetFat(message.Fat).
-		SetCarbohydrates(message.Carbohydrates).
-		SetProtein(message.Protein).
-		SetSource(message.Name).
-		Save(ctx)
-
-	if err != nil {
-		return
-	}
-
-	client.Recipe.UpdateOneID(message.RecipeID).
-		AddIngredients(ingredient).
-		Save(ctx)
+	return ingredientResults, nil
 }
 
 func failOnError(err error, msg string) {
