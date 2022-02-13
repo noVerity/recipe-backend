@@ -9,6 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/gosimple/slug v1.12.0
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/mattn/go-sqlite3 v1.14.10
 	github.com/streadway/amqp v1.0.0
