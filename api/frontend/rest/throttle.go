@@ -17,6 +17,7 @@ var maxTokens = uint(500)
 var refillDuration = time.Minute
 var refillAmount = maxTokens / 2
 
+// ThrottleMiddleware sets a throttle on how many requests a user can make in certain duration
 func ThrottleMiddleware() gin.HandlerFunc {
 	bucketCache, _ := cache.New(500)
 

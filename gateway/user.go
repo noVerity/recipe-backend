@@ -7,6 +7,7 @@ import (
 )
 
 func SetupUserService(router *gin.Engine, userService *url.URL) {
-	router.Any("/user", ReverseProxy(userService))
-	router.Any("/login", ReverseProxy(userService))
+	breaker := CircuitBreakerMiddleware()
+	router.Any("/user", breaker, ReverseProxy(userService))
+	router.Any("/login", breaker, ReverseProxy(userService))
 }

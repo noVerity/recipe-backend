@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -37,14 +36,12 @@ func ProxyTester(t *testing.T, router *gin.Engine) (*httptest.Server, chan *http
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(backendResponse))
 		requestCopy := r
-		fmt.Printf("Arrived at %v\n", requestCopy.URL.Path)
 		go func() {
 			requests <- requestCopy
 		}()
 	}))
 
 	requester := func(method string, srcPath string, token string) *closeNotifyingRecorder {
-		fmt.Printf("Sending: %v\n", srcPath)
 		body := bytes.NewBufferString("")
 		req, _ := http.NewRequest(method, srcPath, body)
 		req.Header.Set("Content-Type", "application/json")

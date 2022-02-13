@@ -25,12 +25,14 @@ func SetupRecipeService(router *gin.Engine, manager *AuthManager, shardMap Shard
 	}
 
 	controller := RecipeController{mapping}
-	router.GET("/recipe/:id", controller.HandleIdRedirectRoute)
-	router.POST("/recipe/:id", controller.HandleIdRedirectRoute)
-	router.PUT("/recipe/:id", controller.HandleIdRedirectRoute)
-	router.DELETE("/recipe/:id", controller.HandleIdRedirectRoute)
-	router.GET("/recipe", manager.AuthMiddleware(), controller.HandleAuthRedirectRoute)
-	router.POST("/recipe", manager.AuthMiddleware(), controller.HandleAuthRedirectRoute)
+
+	recipePath := router.Group("/recipe", CircuitBreakerMiddleware())
+	recipePath.GET("/:id", controller.HandleIdRedirectRoute)
+	recipePath.POST("/:id", controller.HandleIdRedirectRoute)
+	recipePath.PUT("/:id", controller.HandleIdRedirectRoute)
+	recipePath.DELETE("/:id", controller.HandleIdRedirectRoute)
+	recipePath.GET("", manager.AuthMiddleware(), controller.HandleAuthRedirectRoute)
+	recipePath.POST("", manager.AuthMiddleware(), controller.HandleAuthRedirectRoute)
 }
 
 var shardIDParser = regexp.MustCompile("^([^_]+)_")
