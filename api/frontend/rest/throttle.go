@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	cache "github.com/hashicorp/golang-lru"
 )
 
 type bucket struct {
@@ -16,17 +18,19 @@ var refillDuration = time.Minute
 var refillAmount = maxTokens / 2
 
 func ThrottleMiddleware() gin.HandlerFunc {
-	buckets := map[string]*bucket{}
+	bucketCache, _ := cache.New(500)
 
 	return func(c *gin.Context) {
 		user := c.ClientIP()
-		b := buckets[user]
+		bucketResult, ok := bucketCache.Get(user)
 
-		if b == nil {
-			buckets[user] = &bucket{tokens: maxTokens - 1, time: time.Now()}
+		if !ok {
+			bucketCache.Add(user, &bucket{tokens: maxTokens - 1, time: time.Now()})
 			c.Next()
 			return
 		}
+
+		b := bucketResult.(*bucket)
 
 		refillInterval := uint(time.Since(b.time) / refillDuration)
 		tokensAdded := refillAmount * refillInterval
