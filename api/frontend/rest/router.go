@@ -6,6 +6,7 @@ import (
 )
 
 func SetupRouter(r *gin.Engine, auth *AuthManager, recipeCore *core.RecipeCore, ingredientCore *core.IngredientCore) *gin.Engine {
+	r.Use(ThrottleMiddleware())
 	NewIngredientController(r, ingredientCore, auth)
 	NewRecipeController(r, recipeCore, auth)
 	return r
