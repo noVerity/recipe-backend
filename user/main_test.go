@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adomeit.xyz/shared"
 	"bytes"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +18,7 @@ func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint strin
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 
 	gin.SetMode(gin.ReleaseMode)
-	auth := NewAuthManager("TEST_SECRET")
+	auth := shared.NewAuthManager("TEST_SECRET")
 	r := gin.New()
 	shardMap := ShardMap{[]Shard{{"one", "http://localhost"}, {"two", "http://localhost"}}}
 	NewUserController(r, client, auth, &shardMap)
@@ -26,7 +27,7 @@ func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint strin
 	return client, requestTester
 }
 
-func GetJSONRequestTester(router *gin.Engine, auth *AuthManager) func(method string, endpoint string, validToken bool, payload string) *httptest.ResponseRecorder {
+func GetJSONRequestTester(router *gin.Engine, auth *shared.AuthManager) func(method string, endpoint string, validToken bool, payload string) *httptest.ResponseRecorder {
 	testToken, _ := auth.GetToken("Frodo", "one")
 
 	return func(method string, endpoint string, validToken bool, payload string) *httptest.ResponseRecorder {
