@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adomeit.xyz/shared"
 	"net/http"
 	"net/url"
 	"testing"
@@ -12,7 +13,7 @@ import (
 func TestRecipeService(t *testing.T) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	manager := NewAuthManager("TEST")
+	manager := shared.NewAuthManager("TEST")
 
 	// Create tokens for users of various shards
 	tokenOne, _ := manager.GetToken("user1", "one")

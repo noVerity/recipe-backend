@@ -4,6 +4,7 @@ import (
 	"adomeit.xyz/recipe/core"
 	"adomeit.xyz/recipe/ent"
 	"adomeit.xyz/recipe/ent/enttest"
+	"adomeit.xyz/shared"
 	"bytes"
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
@@ -16,7 +17,7 @@ func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint strin
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 
 	gin.SetMode(gin.ReleaseMode)
-	auth := NewAuthManager("TEST_SECRET")
+	auth := shared.NewAuthManager("TEST_SECRET")
 	recipeCore := core.NewRecipeCore(client, nil)
 	ingredientCore := core.NewIngredientCore(client, nil)
 	router := gin.New()
@@ -26,7 +27,7 @@ func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint strin
 	return client, requestTester
 }
 
-func GetJSONRequestTester(router *gin.Engine, auth *AuthManager) func(method string, endpoint string, payload string) *httptest.ResponseRecorder {
+func GetJSONRequestTester(router *gin.Engine, auth *shared.AuthManager) func(method string, endpoint string, payload string) *httptest.ResponseRecorder {
 	testToken, _ := auth.GetToken("TestUser", "one")
 
 	return func(method string, endpoint string, payload string) *httptest.ResponseRecorder {

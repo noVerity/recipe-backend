@@ -4,7 +4,10 @@ go 1.17
 
 // +heroku goVersion 1.17
 
+replace adomeit.xyz/shared => ../shared
+
 require (
+	adomeit.xyz/shared v0.0.0-00010101000000-000000000000
 	entgo.io/ent v0.9.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/jackc/pgx/v4 v4.14.1
@@ -13,6 +16,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
@@ -22,7 +26,6 @@ require (
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

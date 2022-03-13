@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adomeit.xyz/shared"
 	"context"
 	"database/sql"
 	"fmt"
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	r := gin.Default()
-	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
+	manager := shared.NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
 	shardMap, err := GetShardMap()
 
 	if err != nil {

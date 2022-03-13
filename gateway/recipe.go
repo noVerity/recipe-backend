@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adomeit.xyz/shared"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -17,7 +18,7 @@ type RecipeController struct {
 	ShardMap map[string]Shard
 }
 
-func SetupRecipeService(router *gin.Engine, manager *AuthManager, shardMap ShardMap) {
+func SetupRecipeService(router *gin.Engine, manager *shared.AuthManager, shardMap ShardMap) {
 	mapping := make(map[string]Shard)
 
 	for _, shard := range shardMap.Map {

@@ -4,10 +4,12 @@ go 1.17
 
 // +heroku goVersion go1.17
 
+replace adomeit.xyz/shared => ../shared
+
 require (
+	adomeit.xyz/shared v0.0.0-00010101000000-000000000000
 	entgo.io/ent v0.10.0
 	github.com/gin-gonic/gin v1.7.7
-	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/gosimple/slug v1.12.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/pgx/v4 v4.14.1
@@ -16,7 +18,10 @@ require (
 	github.com/stretchr/testify v1.7.1-0.20210427113832-6241f9ab9942
 )
 
-require golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
+require (
+	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
+)
 
 require (
 	ariga.io/atlas v0.3.2-0.20220120225051-c3fac7d636dd // indirect

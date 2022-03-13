@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adomeit.xyz/shared"
 	"math/rand"
 	"net/http"
 
@@ -25,12 +26,12 @@ type UserResponse struct {
 type UserController struct {
 	router   *gin.Engine
 	client   *ent.Client
-	auth     *AuthManager
+	auth     *shared.AuthManager
 	shardMap *ShardMap
 }
 
 // NewUserController takes the gin engine and creates routes for user sign up and login
-func NewUserController(r *gin.Engine, client *ent.Client, auth *AuthManager, shardMap *ShardMap) *UserController {
+func NewUserController(r *gin.Engine, client *ent.Client, auth *shared.AuthManager, shardMap *ShardMap) *UserController {
 	controller := UserController{r, client, auth, shardMap}
 	userRoute := r.Group("/user")
 	{

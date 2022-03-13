@@ -3,6 +3,7 @@ package rest
 import (
 	"adomeit.xyz/recipe/core"
 	"adomeit.xyz/recipe/ent"
+	"adomeit.xyz/shared"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -67,7 +68,7 @@ type RecipeController struct {
 }
 
 // NewRecipeController takes the gin engine and creates routes for CRUD on recipes
-func NewRecipeController(r *gin.Engine, core *core.RecipeCore, auth *AuthManager) *RecipeController {
+func NewRecipeController(r *gin.Engine, core *core.RecipeCore, auth *shared.AuthManager) *RecipeController {
 	controller := RecipeController{core}
 	userRoute := r.Group("/recipe", auth.AuthMiddleware())
 	{

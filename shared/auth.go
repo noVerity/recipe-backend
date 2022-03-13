@@ -1,14 +1,15 @@
-package rest
+package shared
 
 import (
+	"github.com/golang-jwt/jwt/v4"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 )
 
+// AuthManager provides middleware and utility functions to provide bearer token authentication
 type AuthManager struct {
 	secret []byte
 }
@@ -17,6 +18,7 @@ type authHeader struct {
 	Authorization string `header:"Authorization,required"`
 }
 
+// Claims that are being required across the services
 type Claims struct {
 	Username string `json:"username"`
 	Shard    string `json:"shard"`
@@ -27,6 +29,7 @@ func NewAuthManager(secret string) *AuthManager {
 	return &AuthManager{[]byte(secret)}
 }
 
+// AuthMiddleware authenticates the user based on the bearer token and saves user info into the context
 func (manager *AuthManager) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := authHeader{}
@@ -82,6 +85,7 @@ func (manager *AuthManager) GetToken(username string, shard string) (string, err
 		Username: username,
 		Shard:    shard,
 		RegisteredClaims: jwt.RegisteredClaims{
+			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}

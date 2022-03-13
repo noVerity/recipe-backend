@@ -1,6 +1,7 @@
 package main
 
 import (
+	"adomeit.xyz/shared"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -36,7 +37,7 @@ func main() {
 		return
 	}
 
-	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
+	manager := shared.NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
 
 	SetupUserService(r, userService)
 	SetupRecipeService(r, manager, recipeShards)

@@ -4,6 +4,7 @@ import (
 	"adomeit.xyz/recipe/core"
 	"adomeit.xyz/recipe/frontend/rest"
 	"adomeit.xyz/recipe/mq"
+	"adomeit.xyz/shared"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	manager := rest.NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
+	manager := shared.NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
 	// Set up the routes available in the API
 	r := rest.SetupRouter(gin.Default(), manager, recipeCore, ingredientCore)
 	r.Run()
