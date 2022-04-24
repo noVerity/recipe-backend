@@ -59,7 +59,7 @@ resource "heroku_app" "gateway" {
 
   config_vars = {
     GIN_MODE                       = "release",
-    GOOGLE_APPLICATION_CREDENTIALS = "/config/secret.json",
+    GOOGLE_APPLICATION_CREDENTIALS = "/app/secret.json",
     GCP_PROJECT                    = var.GCP_PROJECT,
     APP_USER_SERVICE               = heroku_app.user.web_url,
     APP_RECIPE_SHARDS = jsonencode({
@@ -87,7 +87,7 @@ resource "heroku_app" "user" {
 
   config_vars = {
     GIN_MODE                       = "release",
-    GOOGLE_APPLICATION_CREDENTIALS = "/config/secret.json",
+    GOOGLE_APPLICATION_CREDENTIALS = "/app/secret.json",
     GCP_PROJECT                    = var.GCP_PROJECT,
     APP_RECIPE_SHARDS = jsonencode({
       "shards" = [
