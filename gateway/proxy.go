@@ -1,6 +1,8 @@
 package main
 
 import (
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -16,10 +18,11 @@ func ReverseProxy(target *url.URL) gin.HandlerFunc {
 func ReverseRewriteProxy(target *url.URL, rewritePath func(string) string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		director := func(req *http.Request) {
-			copy := target
-			copy.Path = rewritePath(req.URL.Path)
-			req.URL = copy
-			req.Host = copy.Host
+			targetCopy := target
+			targetCopy.Path = rewritePath(req.URL.Path)
+			req.URL = targetCopy
+			req.Host = targetCopy.Host
+			otel.GetTextMapPropagator().Inject(c.Request.Context(), propagation.HeaderCarrier(req.Header))
 		}
 		proxy := &httputil.ReverseProxy{
 			Director: director,

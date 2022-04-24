@@ -28,12 +28,15 @@ services:
 
   user:
     build: ./user
+    volumes:
+      - ./.secrets:/config
     environment:
       - JWT_SECRET=TEST_SECRET
       - DATABASE_URL=postgres://user:userpassword@user-db:5432/users
       - APP_RECIPE_SHARDS={"shards":[{"name":"one","url":"http://recipe-one:8080"},{"name":"two","url":"http://recipe-two:8080"}]}
       - PORT=8080
       - GIN_MODE=release
+      - GOOGLE_APPLICATION_CREDENTIALS=/config/secret.json
 
   forager:
     build: ./forager
@@ -72,10 +75,12 @@ services:
     build: ./gateway
     ports:
       - 8080:8080
+    volumes:
+      - ./.secrets:/config
     environment:
       - JWT_SECRET=TEST_SECRET
       - APP_USER_SERVICE=http://user:8080
       - APP_RECIPE_SHARDS={"shards":[{"name":"one","url":"http://recipe-one:8080"},{"name":"two","url":"http://recipe-two:8080"}]}
       - PORT=8080
       - GIN_MODE=release
-      
+      - GOOGLE_APPLICATION_CREDENTIALS=/config/secret.json

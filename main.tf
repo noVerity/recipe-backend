@@ -6,6 +6,14 @@ variable "FOODDATA_TOKEN" {
   type = string
 }
 
+variable "GCP_PROJECT" {
+  type = string
+}
+
+variable "GCP_SECRET_BASE64" {
+  type = string
+}
+
 variable "heroku_region" {
   type    = string
   default = "eu"
@@ -28,6 +36,11 @@ terraform {
 provider "heroku" {
 }
 
+provider "google" {
+  project = var.GCP_PROJECT
+  region  = "europe-west2"
+}
+
 resource "random_password" "password" {
   length           = 16
   special          = true
@@ -45,8 +58,10 @@ resource "heroku_app" "gateway" {
   region = var.heroku_region
 
   config_vars = {
-    GIN_MODE         = "release",
-    APP_USER_SERVICE = heroku_app.user.web_url,
+    GIN_MODE                       = "release",
+    GOOGLE_APPLICATION_CREDENTIALS = "/config/secret.json",
+    GCP_PROJECT                    = var.GCP_PROJECT,
+    APP_USER_SERVICE               = heroku_app.user.web_url,
     APP_RECIPE_SHARDS = jsonencode({
       "shards" = [
         {
@@ -61,7 +76,8 @@ resource "heroku_app" "gateway" {
     }),
   }
   sensitive_config_vars = {
-    JWT_SECRET = random_password.password.result
+    JWT_SECRET        = random_password.password.result,
+    GCP_SECRET_BASE64 = var.GCP_SECRET_BASE64,
   }
 }
 
@@ -70,7 +86,9 @@ resource "heroku_app" "user" {
   region = var.heroku_region
 
   config_vars = {
-    GIN_MODE = "release",
+    GIN_MODE                       = "release",
+    GOOGLE_APPLICATION_CREDENTIALS = "/config/secret.json",
+    GCP_PROJECT                    = var.GCP_PROJECT,
     APP_RECIPE_SHARDS = jsonencode({
       "shards" = [
         {
@@ -85,7 +103,8 @@ resource "heroku_app" "user" {
     }),
   }
   sensitive_config_vars = {
-    JWT_SECRET = random_password.password.result
+    JWT_SECRET        = random_password.password.result,
+    GCP_SECRET_BASE64 = var.GCP_SECRET_BASE64
   }
 }
 

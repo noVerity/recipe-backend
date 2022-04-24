@@ -1,6 +1,8 @@
 package main
 
 import (
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"math/rand"
 	"net/http"
 
@@ -23,21 +25,22 @@ type UserResponse struct {
 }
 
 type UserController struct {
-	router   *gin.Engine
-	client   *ent.Client
-	auth     *AuthManager
-	shardMap *ShardMap
+	router    *gin.Engine
+	client    *ent.Client
+	auth      *AuthManager
+	shardMap  *ShardMap
+	telemetry *TelemetryManager
 }
 
 // NewUserController takes the gin engine and creates routes for user sign up and login
-func NewUserController(r *gin.Engine, client *ent.Client, auth *AuthManager, shardMap *ShardMap) *UserController {
-	controller := UserController{r, client, auth, shardMap}
-	userRoute := r.Group("/user")
+func NewUserController(r *gin.Engine, client *ent.Client, auth *AuthManager, shardMap *ShardMap, telemetry *TelemetryManager) *UserController {
+	controller := UserController{r, client, auth, shardMap, telemetry}
+	userRoute := r.Group("/user", telemetry.TracerMiddleware("/user"))
 	{
 		userRoute.POST("", controller.HandleCreateUser)
 		userRoute.GET("", auth.AuthMiddleware(), controller.HandleGetUser)
 	}
-	r.POST("/login", controller.HandleLogin)
+	r.POST("/login", telemetry.TracerMiddleware("/login"), controller.HandleLogin)
 	return &controller
 }
 
@@ -63,7 +66,9 @@ func (controller *UserController) HandleCreateUser(c *gin.Context) {
 		return
 	}
 
+	ctx, span := controller.telemetry.tracer.Start(c.Request.Context(), "Hash Password")
 	passwordHash, err := HashPassword(user.Password)
+	span.End()
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -75,6 +80,7 @@ func (controller *UserController) HandleCreateUser(c *gin.Context) {
 	// otherwise if we add another shard it woldn't take a lot of load from the existing ones
 	shard := rand.Intn(len(controller.shardMap.Map))
 
+	_, span = controller.telemetry.tracer.Start(ctx, "Create user")
 	createdUser, err := controller.client.User.Create().
 		SetUsername(user.Username).
 		SetEmail(user.Email).
@@ -83,9 +89,12 @@ func (controller *UserController) HandleCreateUser(c *gin.Context) {
 		Save(c)
 
 	if err != nil {
+		span.AddEvent("Creating user failed", trace.WithAttributes(attribute.String("error", err.Error())))
+		span.End()
 		c.JSON(http.StatusConflict, gin.H{"error": "User or email already taken"})
 		return
 	}
+	span.End()
 
 	userResponse, err := controller.UserModelToResponse(createdUser)
 

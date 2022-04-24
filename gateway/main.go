@@ -36,10 +36,13 @@ func main() {
 		return
 	}
 
+	projectID := os.Getenv(getenv("GOOGLE_CLOUD_PROJECT", "comedrtest"))
+	telemetry := NewTelemetryManager(projectID)
+
 	manager := NewAuthManager(getenv("JWT_SECRET", "NON_SECRET_DEFAULT"))
 
-	SetupUserService(r, userService)
-	SetupRecipeService(r, manager, recipeShards)
+	SetupUserService(r, userService, telemetry)
+	SetupRecipeService(r, manager, recipeShards, telemetry)
 
 	r.Run()
 }

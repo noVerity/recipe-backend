@@ -39,6 +39,8 @@ jobs:
         env:
           TF_VAR_name: adtest
           TF_VAR_FOODDATA_TOKEN: ${{ secrets.FOODDATA_TOKEN }}
+          TF_VAR_GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+          TF_VAR_GCP_SECRET_BASE64: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
