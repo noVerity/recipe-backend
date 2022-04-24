@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"go.opentelemetry.io/otel"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +21,7 @@ func SetupTestORM(t *testing.T) (*ent.Client, func(method string, endpoint strin
 	auth := NewAuthManager("TEST_SECRET")
 	r := gin.New()
 	shardMap := ShardMap{[]Shard{{"one", "http://localhost"}, {"two", "http://localhost"}}}
-	NewUserController(r, client, auth, &shardMap)
+	NewUserController(r, client, auth, &shardMap, &TelemetryManager{tracer: otel.Tracer("test")})
 	requestTester := GetJSONRequestTester(r, auth)
 
 	return client, requestTester

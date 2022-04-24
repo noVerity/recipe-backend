@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupUserService(router *gin.Engine, userService *url.URL) {
+func SetupUserService(router *gin.Engine, userService *url.URL, telemetry Telemetry) {
 	breaker := CircuitBreakerMiddleware()
-	router.Any("/user", breaker, ReverseProxy(userService))
-	router.Any("/login", breaker, ReverseProxy(userService))
+	router.Any("/user", breaker, telemetry.TracerMiddleware("/user"), ReverseProxy(userService))
+	router.Any("/login", breaker, telemetry.TracerMiddleware("/login"), ReverseProxy(userService))
 }

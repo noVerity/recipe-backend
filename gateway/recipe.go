@@ -17,7 +17,7 @@ type RecipeController struct {
 	ShardMap map[string]Shard
 }
 
-func SetupRecipeService(router *gin.Engine, manager *AuthManager, shardMap ShardMap) {
+func SetupRecipeService(router *gin.Engine, manager *AuthManager, shardMap ShardMap, telemetry Telemetry) {
 	mapping := make(map[string]Shard)
 
 	for _, shard := range shardMap.Map {
@@ -26,7 +26,7 @@ func SetupRecipeService(router *gin.Engine, manager *AuthManager, shardMap Shard
 
 	controller := RecipeController{mapping}
 
-	recipePath := router.Group("/recipe", CircuitBreakerMiddleware())
+	recipePath := router.Group("/recipe", CircuitBreakerMiddleware(), telemetry.TracerMiddleware("/recipe"))
 	recipePath.GET("/:id", controller.HandleIdRedirectRoute)
 	recipePath.POST("/:id", controller.HandleIdRedirectRoute)
 	recipePath.PUT("/:id", controller.HandleIdRedirectRoute)

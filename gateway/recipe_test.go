@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go.opentelemetry.io/otel"
 	"net/http"
 	"net/url"
 	"testing"
@@ -26,7 +27,12 @@ func TestRecipeService(t *testing.T) {
 	backendTwo, requestsTwo, _ := ProxyTester(t, router)
 	defer backendTwo.Close()
 	backendUrlTwo, _ := url.ParseRequestURI(backendTwo.URL)
-	SetupRecipeService(router, manager, ShardMap{[]Shard{{"one", backendUrl.String()}, {"two", backendUrlTwo.String()}}})
+	SetupRecipeService(
+		router,
+		manager,
+		ShardMap{[]Shard{{"one", backendUrl.String()}, {"two", backendUrlTwo.String()}}},
+		&TelemetryManager{tracer: otel.Tracer("test")},
+	)
 
 	// Requests with a valid id will go to the relevant shard
 	resp := requesterOne(http.MethodGet, "/recipe/one_123456", tokenUnknown)

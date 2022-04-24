@@ -36,7 +36,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	NewUserController(r, client, manager, &shardMap)
+	projectID := os.Getenv(getenv("GOOGLE_CLOUD_PROJECT", "comedrtest"))
+	telemetry := NewTelemetryManager(projectID)
+
+	NewUserController(r, client, manager, &shardMap, telemetry)
 
 	// Set up the routes available in the API
 	r.Run()

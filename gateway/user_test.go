@@ -15,7 +15,7 @@ func TestSetupUserService(t *testing.T) {
 	backend, requests, requester := ProxyTester(t, router)
 	defer backend.Close()
 	backendUrl, _ := url.ParseRequestURI(backend.URL)
-	SetupUserService(router, backendUrl)
+	SetupUserService(router, backendUrl, NewNoopTelemetryManager())
 
 	resp := requester(http.MethodGet, "/user", "")
 	req := <-requests
